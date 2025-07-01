@@ -21,8 +21,9 @@ public class Sale {
     @Column(name = "total_amount", nullable = false)
     private Double totalAmount;
 
-    @Column(name = "customer_name", nullable = false)
-    private String customerName;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "customer_id")
+    private Customer customerName;
 
     @OneToMany(mappedBy = "sale", orphanRemoval = true, cascade = CascadeType.ALL)
     private List<SaleItem> saleItems;
