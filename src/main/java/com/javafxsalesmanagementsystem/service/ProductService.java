@@ -5,13 +5,17 @@ import com.javafxsalesmanagementsystem.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Service
 public class ProductService {
 
-    private ProductRepository productRepository;
+    private final ProductRepository productRepository;
 
     @Autowired
     public ProductService(ProductRepository productRepository) {
+        this.productRepository = productRepository;
     }
 
     public void addProduct(Product product) {
@@ -20,5 +24,12 @@ public class ProductService {
 
     public void removeProduct(Product product) {
         productRepository.delete(product);
+    }
+
+    public List<Product> getAllProduct() {
+        Iterable<Product> iterable = productRepository.findAll();
+        List<Product> list = new ArrayList<>();
+        iterable.forEach(list::add);
+        return list;
     }
 }
