@@ -44,7 +44,7 @@ public class ProductUI {
         return start + "..." + end;
     }
 
-    public VBox pagination() {
+    public VBox pagination(boolean hasLogin) {
         ProductService productService = context.getBean(ProductService.class);
         CustomerService customerService = context.getBean(CustomerService.class);
 
@@ -78,7 +78,7 @@ public class ProductUI {
 
             for (int i = start, currentIndex = 0; i < end; i++, currentIndex++) {
                 Product product = allProducts.get(i);
-                VBox productBox = createProductBox(product);
+                VBox productBox = createProductBox(product, hasLogin);
                 int row = currentIndex / 3;
                 int col = currentIndex % 3;
                 gridPane.add(productBox, col, row);
@@ -92,9 +92,23 @@ public class ProductUI {
         return mainContainer;
     }
 
-    private VBox createProductBox(Product product) {
+    private VBox createProductBox(Product product, boolean hasLogin) {
         VBox productBox = new VBox(10);
         productBox.setAlignment(Pos.CENTER);
+        Button addToCartButton = new Button("Add to cart");
+        Button addToCartButtonDisabled = new Button("Log in first");
+        addToCartButtonDisabled.setDisable(true);
+        addToCartButton.setStyle("-fx-background-color: green;" +
+                "-fx-scale-z: 1.5;" +
+                "-fx-text-fill: white;" +
+                "-fx-border-width: 50;" +
+                "-fx-border-radius: 50;");
+        addToCartButton.setCursor(Cursor.HAND);
+        addToCartButtonDisabled.setStyle("-fx-background-color: green;" +
+                "-fx-scale-z: 1.5;" +
+                "-fx-text-fill: white;" +
+                "-fx-border-width: 50;" +
+                "-fx-border-radius: 50;");
 
         try {
             ImageView imageView = new ImageView(new Image(new FileInputStream(product.getImageUrl())));
@@ -105,8 +119,8 @@ public class ProductUI {
             productBox.getChildren().addAll(
                     imageView,
                     Objects.equals(product.getCategory(), "Hot Coffee") ? new Label("☕ " + product.getProductName()) : new Label("❄️ " + product.getProductName()),
-                    new Label("₱" + product.getPrice())
-            );
+                    new Label("₱" + product.getPrice()),
+                    hasLogin ? addToCartButton : addToCartButtonDisabled);
 
             productBox.setStyle(
                     "-fx-border-color: #ccc;" +
