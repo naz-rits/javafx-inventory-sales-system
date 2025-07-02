@@ -1,5 +1,6 @@
 CREATE TABLE IF NOT EXISTS product (
 	product_id BIGINT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    image_url VARCHAR(255) NOT NULL,
     product_name VARCHAR(255) NOT NULL,
     product_description VARCHAR(255) NOT NULL,
     price FLOAT NOT NULL,
@@ -14,11 +15,13 @@ CREATE TABLE IF NOT EXISTS customer(
     username VARCHAR(255) NOT NULL,
     first_name VARCHAR(255) NOT NULL,
     last_name VARCHAR(255) NOT NULL,
-    contact_number VARCHAR(255) NOT NULL
+    contact_number VARCHAR(255) NOT NULL,
+    password VARCHAR(255) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS sale (
 	sale_id BIGINT PRIMARY KEY NOT NULL AUTO_INCREMENT,
+
     date DATETIME NOT NULL DEFAULT current_timestamp,
     total_amount DECIMAL(10, 2) NOT NULL,
     customer_id BIGINT NOT NULL,
