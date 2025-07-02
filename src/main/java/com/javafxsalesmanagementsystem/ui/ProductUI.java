@@ -2,6 +2,7 @@ package com.javafxsalesmanagementsystem.ui;
 
 
 import com.javafxsalesmanagementsystem.entity.Product;
+import com.javafxsalesmanagementsystem.service.CustomerService;
 import com.javafxsalesmanagementsystem.service.ProductService;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -45,7 +46,7 @@ public class ProductUI {
 
     public VBox pagination() {
         ProductService productService = context.getBean(ProductService.class);
-
+        CustomerService customerService = context.getBean(CustomerService.class);
 
         VBox mainContainer = new VBox();
         mainContainer.setAlignment(Pos.CENTER);
