@@ -53,7 +53,6 @@ public class ProductUI {
 
 
         Pagination pagination = new Pagination();
-        pagination.setCursor(Cursor.HAND);
         List<Product> allProducts = productService.getAllProduct();
         int pageSize = 6;
         int pageCount = (int) Math.ceil((double) allProducts.size() / pageSize);
@@ -104,7 +103,7 @@ public class ProductUI {
 
             productBox.getChildren().addAll(
                     imageView,
-                    Objects.equals(product.getCategory(), "Hot Coffee") ? new Label("☕ " + product.getProductName()) : new Label("❄ " + product.getProductName()),
+                    Objects.equals(product.getCategory(), "Hot Coffee") ? new Label("☕ " + product.getProductName()) : new Label("❄️ " + product.getProductName()),
                     new Label("₱" + product.getPrice())
             );
 

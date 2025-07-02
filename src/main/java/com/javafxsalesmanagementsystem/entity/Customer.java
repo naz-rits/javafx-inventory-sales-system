@@ -16,14 +16,20 @@ public class Customer {
     private Long id;
 
 
-    @Column(name = "first_name")
+    @Column(name = "first_name", nullable = false)
     private String firstName;
 
-    @Column(name = "last_name")
+    @Column(name = "last_name", nullable = false)
     private String lastName;
 
-    @Column(name = "contact_number")
+    @Column(name = "contact_number", nullable = false)
     private String contactNumber;
+
+    @Column(name = "username", nullable = false)
+    private String username;
+
+    @Column(name = "password", nullable = false)
+    private String password;
 
     @OneToMany(mappedBy = "customerName", orphanRemoval = true, cascade = CascadeType.ALL)
     private List<Sale> sales;

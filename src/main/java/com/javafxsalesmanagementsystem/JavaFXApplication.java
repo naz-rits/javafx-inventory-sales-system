@@ -1,13 +1,20 @@
 package com.javafxsalesmanagementsystem;
 
+import com.javafxsalesmanagementsystem.ui.LoginAndRegisterUI;
 import com.javafxsalesmanagementsystem.ui.ProductUI;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Pos;
+import javafx.scene.Cursor;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.layout.Border;
 import javafx.scene.layout.VBox;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.Media;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -28,23 +35,47 @@ public class JavaFXApplication extends Application {
     }
 
     public void start(Stage primaryStage) throws Exception {
+        // playBackgroundMusic("C:\\Users\\Rich Nazareta\\Desktop\\JavaFX\\JavaFXSalesManagementSystem\\src\\main\\java\\com\\javafxsalesmanagementsystem\\bgmusic\\Iframe burbank - sorry i like you [GgVcgbtHY9k].mp3");
+
         ProductUI productUI = applicationContext.getBean(ProductUI.class);
         productUI.context = applicationContext;
+        LoginAndRegisterUI loginAndRegisterUI = applicationContext.getBean(LoginAndRegisterUI.class);
 
-        playBackgroundMusic("C:\\Users\\Rich Nazareta\\Desktop\\JavaFX\\JavaFXSalesManagementSystem\\src\\main\\java\\com\\javafxsalesmanagementsystem\\bgmusic\\Iframe burbank - sorry i like you [GgVcgbtHY9k].mp3");
-
+        Button login = new Button("Login");
+        login.setStyle("-fx-background-color: green;" +
+                "-fx-scale-z: 1.5;" +
+                "-fx-padding: 10;" +
+                "-fx-text-fill: white;" +
+                "-fx-border-width: 50;" +
+                "-fx-border-radius: 50;"
+         );
+        login.setFont(Font.font("Segoe UI", FontWeight.BOLD, 20));
+        login.setCursor(Cursor.HAND);
+        login.setTranslateX(850);
+        login.setTranslateY(20);
+        login.setBorder(Border.stroke(Color.BLACK));
         VBox productContainer = productUI.pagination();
+
         Runnable onRefresh = () -> {
             VBox newList = productUI.pagination();
             productContainer.getChildren().setAll(newList.getChildren());
         };
 
-
+        login.setOnAction(e -> {
+            loginAndRegisterUI.loginStage().show();
+        });
 
         VBox root = new VBox(20, productContainer, productUI.addButton(primaryStage, onRefresh));
-        root.setStyle("-fx-background-color: #D9D9D9;");
         root.setAlignment(Pos.CENTER);
-        Scene scene = new Scene(root, 960, 650);
+        VBox roots = new VBox(10, login, root);
+        String image = getClass().getResource("/images/coffee_background.jpg").toExternalForm();
+
+        roots.setStyle("-fx-background-image: url('" + image + "');"
+                + "-fx-background-size: cover;");
+
+
+        Scene scene = new Scene(roots, 960, 700);
+
 
         primaryStage.setScene(scene);
         primaryStage.setResizable(false);
