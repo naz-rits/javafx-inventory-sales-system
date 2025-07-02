@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 
@@ -33,7 +34,7 @@ public class LoginAndRegisterUI {
 
 
     public Stage loginStage() {
-        String image = getClass().getResource("/images/coffee_background.jpg").toExternalForm();
+        String image = Objects.requireNonNull(getClass().getResource("/images/coffee_background.jpg")).toExternalForm();
         CustomerService customerService = applicationContext.getBean(CustomerService.class);
 
         MainUI mainUI = applicationContext.getBean(MainUI.class);

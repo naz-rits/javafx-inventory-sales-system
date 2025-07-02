@@ -42,7 +42,8 @@ public class JavaFXApplication extends Application {
         MainUI mainUI = applicationContext.getBean(MainUI.class);
         mainUI.applicationContext = applicationContext;
 
-        mainUI.initialStage(Optional.empty()).show();
+        Stage stage = mainUI.initialStage(Optional.empty());
+        stage.show();
     }
 
 

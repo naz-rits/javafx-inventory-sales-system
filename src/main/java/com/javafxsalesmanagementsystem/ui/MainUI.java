@@ -1,6 +1,7 @@
 package com.javafxsalesmanagementsystem.ui;
 
 import com.javafxsalesmanagementsystem.entity.Customer;
+import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Scene;
@@ -80,6 +81,7 @@ public class MainUI {
         primaryStage.setScene(scene);
         primaryStage.setResizable(false);
 
+        
         return primaryStage;
     }
 

@@ -93,8 +93,12 @@ public class ProductUI {
     }
 
     private VBox createProductBox(Product product, boolean hasLogin) {
+
+        AddToCartUI addToCartUI = new AddToCartUI();
+
         VBox productBox = new VBox(10);
         productBox.setAlignment(Pos.CENTER);
+
         Button addToCartButton = new Button("Add to cart");
         Button addToCartButtonDisabled = new Button("Log in first");
         addToCartButtonDisabled.setDisable(true);
@@ -104,6 +108,13 @@ public class ProductUI {
                 "-fx-border-width: 50;" +
                 "-fx-border-radius: 50;");
         addToCartButton.setCursor(Cursor.HAND);
+        addToCartButton.setOnAction(e -> {
+            try {
+                addToCartUI.addToCart(product).show();
+            } catch (FileNotFoundException ex) {
+                throw new RuntimeException(ex);
+            }
+        });
         addToCartButtonDisabled.setStyle("-fx-background-color: green;" +
                 "-fx-scale-z: 1.5;" +
                 "-fx-text-fill: white;" +
