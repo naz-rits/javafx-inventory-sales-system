@@ -99,9 +99,11 @@ public class ProductUI {
         VBox productBox = new VBox(10);
         productBox.setAlignment(Pos.CENTER);
 
-        Button addToCartButton = new Button("Add to cart");
         Button addToCartButtonDisabled = new Button("Log in first");
         addToCartButtonDisabled.setDisable(true);
+        addToCartButtonDisabled.setPrefWidth(150);
+
+        Button addToCartButton = new Button("Buy");
         addToCartButton.setStyle("-fx-background-color: green;" +
                 "-fx-scale-z: 1.5;" +
                 "-fx-text-fill: white;" +
@@ -120,6 +122,7 @@ public class ProductUI {
                 "-fx-text-fill: white;" +
                 "-fx-border-width: 50;" +
                 "-fx-border-radius: 50;");
+        addToCartButton.setPrefWidth(150);
 
         try {
             ImageView imageView = new ImageView(new Image(new FileInputStream(product.getImageUrl())));
@@ -156,6 +159,7 @@ public class ProductUI {
                         "-fx-scale-z: 1.5;" +
                         "-fx-padding: 10;" +
                         "-fx-text-fill: white;");
+        button.setPrefWidth(300);
         button.setFont(Font.font("Verdana", FontWeight.BOLD, 15));
         button.setCursor(Cursor.HAND);
         button.setOnAction(e -> {

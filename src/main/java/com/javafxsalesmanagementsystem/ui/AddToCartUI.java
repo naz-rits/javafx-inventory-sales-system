@@ -3,6 +3,7 @@ package com.javafxsalesmanagementsystem.ui;
 import com.javafxsalesmanagementsystem.entity.Product;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Cursor;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
@@ -51,11 +52,11 @@ public class AddToCartUI {
         StackPane root = new StackPane(border, productImage);
         root.setTranslateY(50);
 
-        Rectangle background = new Rectangle(300, 300);
+        Rectangle background = new Rectangle(200, 600);
         background.setStroke(Color.web("#D9D9D9"));
         background.setFill(Color.web("#D9D9D9"));
         background.setStrokeWidth(20);
-        background.setArcWidth(10);
+        background.setArcWidth(5);
         background.setArcHeight(15);
         background.setTranslateX(46);
         background.setTranslateY(69);
@@ -75,6 +76,7 @@ public class AddToCartUI {
         price.setFont(Font.font("Arial", 14));
         price.setWrappingWidth(300);
         price.setFill(Color.web("#444"));
+        price.setTranslateX(130);
 
         Label quantityText = new Label("Quantity");
         quantityText.setFont(Font.font("Arial", FontWeight.BOLD, 18));
@@ -86,8 +88,7 @@ public class AddToCartUI {
         quantity.setTranslateY(20);
         quantity.setValue(1);
 
-
-        Button button = new Button("Add");
+        Button button = new Button("Place order");
         button.setStyle("-fx-background-color: green;" +
                 "-fx-scale-z: 1.5;" +
                 "-fx-padding: 10;" +
@@ -96,7 +97,12 @@ public class AddToCartUI {
                 "-fx-border-radius: 50;"
                 );
         button.setFont(Font.font("Arial", FontWeight.BOLD, 18));
-        button.setTranslateY(20);
+        button.setTranslateY(5);
+        button.setCursor(Cursor.HAND);
+        button.setPrefWidth(200);
+        button.setOnAction(event -> {
+
+        });
 
         Text total = new Text();
         total.setFont(Font.font("Arial", FontWeight.BOLD, 18));
@@ -106,7 +112,12 @@ public class AddToCartUI {
         quantity.getEditor().textProperty().addListener((obs, oldText, newText) -> {
             try {
                 int qty = Integer.parseInt(newText);
-                total.setText("₱" + String.format("%.2f", product.getPrice() * qty));
+                if (qty > 0 && qty <= product.getQuantity()) {
+                    total.setText("₱" + String.format("%.2f", product.getPrice() * qty));
+                }
+                else {
+                    total.setText("Maximum limit reached");
+                }
             } catch (NumberFormatException e) {
                 total.setText("₱ 0.00"); // Or show error/placeholder
             }
@@ -116,9 +127,9 @@ public class AddToCartUI {
         VBox infoBox = new VBox(10, nameLabel, price, descriptionText, quantityText,
                                        quantity, total, button);
         infoBox.setTranslateY(75);
-        infoBox.setPadding(new Insets(40));
-        infoBox.setAlignment(Pos.TOP_LEFT);
-        infoBox.setPrefWidth(380);
+        infoBox.setPadding(new Insets(30));
+        infoBox.setAlignment(Pos.BASELINE_CENTER);
+        infoBox.setPrefWidth(200);
         infoBox.setStyle("""
         -fx-background-color: rgba(255,255,255,0.9);
         -fx-background-radius: 20;
@@ -136,4 +147,6 @@ public class AddToCartUI {
         stage.initModality(Modality.APPLICATION_MODAL);
         return stage;
     }
+
+    public Stage cartList
 }

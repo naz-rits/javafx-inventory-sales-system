@@ -62,7 +62,7 @@ public class LoginAndRegisterUI {
                 "-fx-border-width: 50;" +
                 "-fx-border-radius: 50;"
         );
-        login.setTranslateX(49);
+        login.setPrefWidth(150);
         login.setOnAction(e -> {
             Optional<Customer> customer = customerService.findCustomerByUsernameAndPassword(username.getText(), password.getText());
             if (customer.isPresent()) {
@@ -129,7 +129,7 @@ public class LoginAndRegisterUI {
         Customer customer = new Customer();
 
         Stage stage = new Stage();
-        String image = getClass().getResource("/images/coffee_background.jpg").toExternalForm();
+        String image = Objects.requireNonNull(getClass().getResource("/images/coffee_background.jpg")).toExternalForm();
 
         TextField firstName = new TextField();
         TextField lastName = new TextField();
@@ -143,7 +143,7 @@ public class LoginAndRegisterUI {
                 "-fx-text-fill: white;" +
                 "-fx-border-width: 50;" +
                 "-fx-border-radius: 50;");
-        register.setTranslateX(49);
+        register.setPrefWidth(150);
         register.setCursor(Cursor.HAND);
         register.setOnAction(e -> {
             customer.setFirstName(firstName.getText());
