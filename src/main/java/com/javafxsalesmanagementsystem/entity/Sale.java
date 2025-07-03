@@ -25,6 +25,7 @@ public class Sale {
     @JoinColumn(name = "customer_id")
     private Customer customerName;
 
-    @OneToMany(mappedBy = "sale", orphanRemoval = true, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.EAGER, mappedBy = "sale", orphanRemoval = true, cascade = CascadeType.ALL)
     private List<SaleItem> saleItems;
+
 }

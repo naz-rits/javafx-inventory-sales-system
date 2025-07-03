@@ -35,6 +35,7 @@ public class MainUI {
         productUI.context = applicationContext;
         LoginAndRegisterUI loginAndRegisterUI = applicationContext.getBean(LoginAndRegisterUI.class);
         loginAndRegisterUI.applicationContext = applicationContext;
+        AddToCartUI addToCartUI = new AddToCartUI();
 
         Label label = new Label();
         label.setStyle("-fx-text-fill: white;");
@@ -63,7 +64,9 @@ public class MainUI {
         cart.setFont(Font.font("Segoe UI", FontWeight.BOLD, 20));
         cart.setCursor(Cursor.HAND);
         cart.setTranslateX(405);
-
+        cart.setOnAction(event -> {
+            addToCartUI.cartList(customer).show();
+        });
         Button login = new Button("Login");
         if (hasLogin) {
             login.setText(customer.get().getUsername());

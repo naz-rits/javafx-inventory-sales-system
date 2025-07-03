@@ -1,6 +1,9 @@
 package com.javafxsalesmanagementsystem.ui;
 
+import com.javafxsalesmanagementsystem.entity.Customer;
 import com.javafxsalesmanagementsystem.entity.Product;
+import com.javafxsalesmanagementsystem.entity.Sale;
+import com.javafxsalesmanagementsystem.entity.SaleItem;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
@@ -8,6 +11,8 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -17,12 +22,15 @@ import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import org.hibernate.annotations.Check;
 import org.springframework.stereotype.Service;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.time.LocalDateTime;
 import java.util.Objects;
-import java.util.stream.IntStream;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Service
 public class AddToCartUI {
@@ -88,7 +96,7 @@ public class AddToCartUI {
         quantity.setTranslateY(20);
         quantity.setValue(1);
 
-        Button button = new Button("Place order");
+        Button button = new Button("Add to cart");
         button.setStyle("-fx-background-color: green;" +
                 "-fx-scale-z: 1.5;" +
                 "-fx-padding: 10;" +
@@ -148,5 +156,39 @@ public class AddToCartUI {
         return stage;
     }
 
-    public Stage cartList
+    public Stage cartList(Optional<Customer> customer){
+        Stage stage = new Stage();
+
+        VBox root = new VBox(20);
+
+        root.setTranslateX(15);
+        if (customer.isPresent()) {
+            for (Sale sale : customer.get().getSales()) {
+                AtomicReference<Double> totalPrice = new AtomicReference<>(0.0);
+                for (SaleItem saleItem : sale.getSaleItems()) {
+                    CheckBox checkBox = new CheckBox();
+                    Product product = saleItem.getProduct();
+                    String productName = product.getProductName();
+                    Double totalAmount = sale.getTotalAmount();
+
+                    checkBox.setText("Product Name: " + productName + "       Total: " + totalAmount);
+                    checkBox.setOnAction(event -> {
+                        if (checkBox.isSelected()) {
+                            totalPrice.updateAndGet(v -> v + totalAmount);
+                        } else {
+                            totalPrice.updateAndGet(v -> v - totalAmount);
+                        }
+                        System.out.println(totalPrice.get());
+                    });
+
+                    root.getChildren().add(checkBox);
+                }
+            }
+        }
+
+        VBox vBox = new VBox(10, new Separator(), root, new Separator());
+
+        stage.setScene(new Scene(vBox, 400, 600));
+        return stage;
+    }
 }

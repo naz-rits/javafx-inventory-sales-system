@@ -31,6 +31,6 @@ public class Customer {
     @Column(name = "password", nullable = false)
     private String password;
 
-    @OneToMany(mappedBy = "customerName", orphanRemoval = true, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.EAGER, mappedBy = "customerName", orphanRemoval = true, cascade = CascadeType.ALL)
     private List<Sale> sales;
 }
