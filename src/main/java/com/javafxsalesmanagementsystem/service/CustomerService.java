@@ -1,18 +1,24 @@
 package com.javafxsalesmanagementsystem.service;
 
 import com.javafxsalesmanagementsystem.entity.Customer;
+import com.javafxsalesmanagementsystem.entity.Sale;
 import com.javafxsalesmanagementsystem.repository.CustomerRepository;
+import com.javafxsalesmanagementsystem.repository.SaleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
 public class CustomerService {
 
-    @Autowired
-    private CustomerRepository customerRepository;
+    public CustomerRepository customerRepository;
 
+    @Autowired
+    public CustomerService(CustomerRepository customerRepository, SaleRepository saleRepository) {
+        this.customerRepository = customerRepository;
+    }
 
 
 
@@ -23,4 +29,6 @@ public class CustomerService {
     public Optional<Customer> findCustomerByUsernameAndPassword(String username, String password) {
         return customerRepository.findByUsernameAndPassword(username, password);
     }
+
+
 }

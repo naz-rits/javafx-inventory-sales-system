@@ -35,7 +35,8 @@ public class MainUI {
         productUI.context = applicationContext;
         LoginAndRegisterUI loginAndRegisterUI = applicationContext.getBean(LoginAndRegisterUI.class);
         loginAndRegisterUI.applicationContext = applicationContext;
-        AddToCartUI addToCartUI = new AddToCartUI();
+        AddToCartUI addToCartUI = applicationContext.getBean(AddToCartUI.class);
+        addToCartUI.context = applicationContext;
 
         Label label = new Label();
         label.setStyle("-fx-text-fill: white;");
@@ -64,6 +65,8 @@ public class MainUI {
         cart.setFont(Font.font("Segoe UI", FontWeight.BOLD, 20));
         cart.setCursor(Cursor.HAND);
         cart.setTranslateX(405);
+
+        VBox vBox = new VBox();
         cart.setOnAction(event -> {
             addToCartUI.cartList(customer).show();
         });
@@ -84,10 +87,10 @@ public class MainUI {
         login.setPrefWidth(150);
 
 
-        VBox productContainer = productUI.pagination(hasLogin);
+        VBox productContainer = productUI.pagination(hasLogin, customer);
 
         Runnable onRefresh = () -> {
-            VBox newList = productUI.pagination(hasLogin);
+            VBox newList = productUI.pagination(hasLogin, customer);
             productContainer.getChildren().setAll(newList.getChildren());
         };
 
@@ -96,7 +99,7 @@ public class MainUI {
         });
 
         HBox hBox = new HBox(650, cart, login);
-        VBox root = new VBox(20, productContainer, productUI.addButton(primaryStage, onRefresh));
+        VBox root = new VBox(20, productContainer, hasLogin ? new VBox() : productUI.addButton(primaryStage, onRefresh));
         root.setAlignment(Pos.CENTER);
         VBox roots = new VBox(10, hBox, root);
         String image = Objects.requireNonNull(getClass().getResource("/images/coffee_background.jpg")).toExternalForm();

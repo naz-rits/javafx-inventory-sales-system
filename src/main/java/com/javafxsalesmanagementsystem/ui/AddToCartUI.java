@@ -4,6 +4,8 @@ import com.javafxsalesmanagementsystem.entity.Customer;
 import com.javafxsalesmanagementsystem.entity.Product;
 import com.javafxsalesmanagementsystem.entity.Sale;
 import com.javafxsalesmanagementsystem.entity.SaleItem;
+import com.javafxsalesmanagementsystem.service.SaleItemService;
+import com.javafxsalesmanagementsystem.service.SaleService;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
@@ -11,8 +13,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -22,12 +22,14 @@ import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import org.hibernate.annotations.Check;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.stereotype.Service;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
@@ -35,8 +37,13 @@ import java.util.concurrent.atomic.AtomicReference;
 @Service
 public class AddToCartUI {
 
-    public Stage addToCart(Product product) throws FileNotFoundException {
+    public ConfigurableApplicationContext context;
+
+    public Stage addToCart(Product product, Optional<Customer> customer) throws FileNotFoundException {
         String backgroundImage = Objects.requireNonNull(getClass().getResource("/images/coffee_background.jpg")).toExternalForm();
+
+        SaleService saleService = context.getBean(SaleService.class);
+        SaleItemService saleItemService = context.getBean(SaleItemService.class);
 
         FileInputStream image = new FileInputStream(product.getImageUrl());
         ImageView productImage = new ImageView(new Image(image));
@@ -108,13 +115,35 @@ public class AddToCartUI {
         button.setTranslateY(5);
         button.setCursor(Cursor.HAND);
         button.setPrefWidth(200);
-        button.setOnAction(event -> {
 
+        double totalPrice = product.getPrice() * quantity.getValue();
+        button.setOnAction(event -> {
+            if (customer.isPresent()) {
+                String value = quantity.getEditor().getText();
+
+                Customer customer1 = customer.get();
+                Sale sale = new Sale();
+                SaleItem saleItem = new SaleItem();
+
+                sale.setTotalAmount(totalPrice);
+                sale.setCustomerName(customer1);
+                sale.setDate(LocalDateTime.now());
+
+                saleItem.setPrice(product.getPrice());
+                saleItem.setQuantity(Integer.parseInt(value));
+                saleItem.setProduct(product);
+                saleItem.setSale(sale);
+
+                saleService.addSales(sale);
+                saleItemService.saveSaleItem(saleItem);
+
+            }
         });
 
         Text total = new Text();
+
         total.setFont(Font.font("Arial", FontWeight.BOLD, 18));
-        total.setText("₱" + (product.getPrice() * quantity.getValue()));
+        total.setText("₱" + totalPrice);
         total.setTranslateY(20);
 
         quantity.getEditor().textProperty().addListener((obs, oldText, newText) -> {
@@ -161,34 +190,43 @@ public class AddToCartUI {
 
         VBox root = new VBox(20);
 
+
         root.setTranslateX(15);
+        AtomicReference<Double> totalPrice = new AtomicReference<>(0.0);
+
         if (customer.isPresent()) {
             for (Sale sale : customer.get().getSales()) {
-                AtomicReference<Double> totalPrice = new AtomicReference<>(0.0);
                 for (SaleItem saleItem : sale.getSaleItems()) {
                     CheckBox checkBox = new CheckBox();
+
                     Product product = saleItem.getProduct();
                     String productName = product.getProductName();
-                    Double totalAmount = sale.getTotalAmount();
+                    int quantity = saleItem.getQuantity();
+                    double totalAmount = quantity * product.getPrice();
 
-                    checkBox.setText("Product Name: " + productName + "       Total: " + totalAmount);
+                    checkBox.setText("Product: " + productName +
+                            ", Qty: " + quantity +
+                            ", Subtotal: ₱" + String.format("%.2f", totalAmount));
+
                     checkBox.setOnAction(event -> {
                         if (checkBox.isSelected()) {
                             totalPrice.updateAndGet(v -> v + totalAmount);
                         } else {
                             totalPrice.updateAndGet(v -> v - totalAmount);
                         }
-                        System.out.println(totalPrice.get());
+                        System.out.println("Running Total: ₱" + String.format("%.2f", totalPrice.get()));
                     });
 
-                    root.getChildren().add(checkBox);
+                    root.getChildren().addAll(new Separator(), checkBox, new Separator());
                 }
             }
         }
 
-        VBox vBox = new VBox(10, new Separator(), root, new Separator());
 
-        stage.setScene(new Scene(vBox, 400, 600));
+        ScrollPane scrollPane = new ScrollPane(root);
+        scrollPane.setFitToWidth(true);
+
+        stage.setScene(new Scene(scrollPane, 400, 600));
         return stage;
     }
 }

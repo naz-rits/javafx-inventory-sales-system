@@ -1,6 +1,7 @@
 package com.javafxsalesmanagementsystem.ui;
 
 
+import com.javafxsalesmanagementsystem.entity.Customer;
 import com.javafxsalesmanagementsystem.entity.Product;
 import com.javafxsalesmanagementsystem.service.CustomerService;
 import com.javafxsalesmanagementsystem.service.ProductService;
@@ -28,6 +29,7 @@ import java.io.FileNotFoundException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
 public class ProductUI {
@@ -44,7 +46,7 @@ public class ProductUI {
         return start + "..." + end;
     }
 
-    public VBox pagination(boolean hasLogin) {
+    public VBox pagination(boolean hasLogin, Optional<Customer> customer) {
         ProductService productService = context.getBean(ProductService.class);
         CustomerService customerService = context.getBean(CustomerService.class);
 
@@ -78,7 +80,7 @@ public class ProductUI {
 
             for (int i = start, currentIndex = 0; i < end; i++, currentIndex++) {
                 Product product = allProducts.get(i);
-                VBox productBox = createProductBox(product, hasLogin);
+                VBox productBox = createProductBox(product, hasLogin, customer);
                 int row = currentIndex / 3;
                 int col = currentIndex % 3;
                 gridPane.add(productBox, col, row);
@@ -92,9 +94,9 @@ public class ProductUI {
         return mainContainer;
     }
 
-    private VBox createProductBox(Product product, boolean hasLogin) {
+    private VBox createProductBox(Product product, boolean hasLogin, Optional<Customer> customer) {
 
-        AddToCartUI addToCartUI = new AddToCartUI();
+        AddToCartUI addToCartUI = context.getBean(AddToCartUI.class);
 
         VBox productBox = new VBox(10);
         productBox.setAlignment(Pos.CENTER);
@@ -112,7 +114,7 @@ public class ProductUI {
         addToCartButton.setCursor(Cursor.HAND);
         addToCartButton.setOnAction(e -> {
             try {
-                addToCartUI.addToCart(product).show();
+                addToCartUI.addToCart(product, customer).show();
             } catch (FileNotFoundException ex) {
                 throw new RuntimeException(ex);
             }
