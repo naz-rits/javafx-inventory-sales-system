@@ -4,6 +4,7 @@ import com.javafxsalesmanagementsystem.entity.Customer;
 import com.javafxsalesmanagementsystem.entity.Product;
 import com.javafxsalesmanagementsystem.entity.Sale;
 import com.javafxsalesmanagementsystem.entity.SaleItem;
+import com.javafxsalesmanagementsystem.service.CustomerService;
 import com.javafxsalesmanagementsystem.service.SaleItemService;
 import com.javafxsalesmanagementsystem.service.SaleService;
 import javafx.geometry.Insets;
@@ -22,14 +23,12 @@ import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.stereotype.Service;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
@@ -38,12 +37,11 @@ import java.util.concurrent.atomic.AtomicReference;
 public class AddToCartUI {
 
     public ConfigurableApplicationContext context;
+    private Stage currentCartStage;
+    private ScrollPane currentCartScrollPane;
 
     public Stage addToCart(Product product, Optional<Customer> customer) throws FileNotFoundException {
         String backgroundImage = Objects.requireNonNull(getClass().getResource("/images/coffee_background.jpg")).toExternalForm();
-
-        SaleService saleService = context.getBean(SaleService.class);
-        SaleItemService saleItemService = context.getBean(SaleItemService.class);
 
         FileInputStream image = new FileInputStream(product.getImageUrl());
         ImageView productImage = new ImageView(new Image(image));
@@ -121,22 +119,47 @@ public class AddToCartUI {
             if (customer.isPresent()) {
                 String value = quantity.getEditor().getText();
 
-                Customer customer1 = customer.get();
-                Sale sale = new Sale();
-                SaleItem saleItem = new SaleItem();
+                try {
+                    int qty = Integer.parseInt(value);
+                    if (qty <= 0 || qty > product.getQuantity()) {
+                        showAlert("Invalid quantity");
+                        return;
+                    }
 
-                sale.setTotalAmount(totalPrice);
-                sale.setCustomerName(customer1);
-                sale.setDate(LocalDateTime.now());
+                    Customer customer1 = customer.get();
+                    Sale sale = new Sale();
+                    SaleItem saleItem = new SaleItem();
 
-                saleItem.setPrice(product.getPrice());
-                saleItem.setQuantity(Integer.parseInt(value));
-                saleItem.setProduct(product);
-                saleItem.setSale(sale);
+                    sale.setTotalAmount(product.getPrice() * qty);
+                    sale.setCustomerName(customer1);
+                    sale.setDate(LocalDateTime.now());
 
-                saleService.addSales(sale);
-                saleItemService.saveSaleItem(saleItem);
+                    saleItem.setPrice(product.getPrice());
+                    saleItem.setQuantity(qty);
+                    saleItem.setProduct(product);
+                    saleItem.setSale(sale);
 
+                    // Save to database
+                    SaleService saleService = context.getBean(SaleService.class);
+                    SaleItemService saleItemService = context.getBean(SaleItemService.class);
+                    CustomerService customerService = context.getBean(CustomerService.class);
+
+                    saleService.addSales(sale);
+                    saleItemService.saveSaleItem(saleItem);
+
+                    // Refresh the customer data
+                    Customer updatedCustomer = customerService.findCustomerById(customer1.getId()).orElse(null);
+                    Optional<Customer> updatedCustomerOpt = Optional.ofNullable(updatedCustomer);
+
+                    // Refresh the cart display
+                    refreshCart(updatedCustomerOpt);
+
+                    // Close the add to cart window
+                    ((Stage) button.getScene().getWindow()).close();
+
+                } catch (NumberFormatException e) {
+                    showAlert("Please enter a valid number for quantity");
+                }
             }
         });
 
@@ -185,48 +208,83 @@ public class AddToCartUI {
         return stage;
     }
 
-    public Stage cartList(Optional<Customer> customer){
-        Stage stage = new Stage();
-
+    private VBox createCartVBox(Optional<Customer> customer) {
         VBox root = new VBox(20);
-
-
         root.setTranslateX(15);
         AtomicReference<Double> totalPrice = new AtomicReference<>(0.0);
 
         if (customer.isPresent()) {
-            for (Sale sale : customer.get().getSales()) {
-                for (SaleItem saleItem : sale.getSaleItems()) {
-                    CheckBox checkBox = new CheckBox();
 
-                    Product product = saleItem.getProduct();
-                    String productName = product.getProductName();
-                    int quantity = saleItem.getQuantity();
-                    double totalAmount = quantity * product.getPrice();
+            CustomerService customerService = context.getBean(CustomerService.class);
+            Customer freshCustomer = customerService.findCustomerById(customer.get().getId()).orElse(null);
 
-                    checkBox.setText("Product: " + productName +
-                            ", Qty: " + quantity +
-                            ", Subtotal: ₱" + String.format("%.2f", totalAmount));
+            if (freshCustomer != null) {
+                for (Sale sale : freshCustomer.getSales()) {
+                    for (SaleItem saleItem : sale.getSaleItems()) {
+                        CheckBox checkBox = new CheckBox();
 
-                    checkBox.setOnAction(event -> {
-                        if (checkBox.isSelected()) {
-                            totalPrice.updateAndGet(v -> v + totalAmount);
-                        } else {
-                            totalPrice.updateAndGet(v -> v - totalAmount);
-                        }
-                        System.out.println("Running Total: ₱" + String.format("%.2f", totalPrice.get()));
-                    });
+                        Product product = saleItem.getProduct();
+                        String productName = product.getProductName();
+                        int quantity = saleItem.getQuantity();
+                        double totalAmount = quantity * product.getPrice();
 
-                    root.getChildren().addAll(new Separator(), checkBox, new Separator());
+                        checkBox.setText("Product: " + productName +
+                                ", Qty: " + quantity +
+                                ", Subtotal: ₱" + String.format("%.2f", totalAmount));
+
+                        checkBox.setOnAction(event -> {
+                            if (checkBox.isSelected()) {
+                                totalPrice.updateAndGet(v -> v + totalAmount);
+                            } else {
+                                totalPrice.updateAndGet(v -> v - totalAmount);
+                            }
+                            System.out.println("Running Total: ₱" + String.format("%.2f", totalPrice.get()));
+                        });
+
+                        root.getChildren().addAll(new Separator(), checkBox, new Separator());
+                    }
                 }
             }
         }
 
+        return root;
+    }
 
+    public void cartListVBox(Optional<Customer> customer) {
+        VBox cartContent = createCartVBox(customer);
+        cartListScroll(cartContent);
+    }
+
+    public void cartListScroll(VBox root) {
         ScrollPane scrollPane = new ScrollPane(root);
         scrollPane.setFitToWidth(true);
 
-        stage.setScene(new Scene(scrollPane, 400, 600));
-        return stage;
+        currentCartScrollPane = scrollPane;
+        cartListStage(scrollPane);
+    }
+
+    public void cartListStage(ScrollPane root) {
+        if (currentCartStage == null) {
+            currentCartStage = new Stage();
+            currentCartStage.setScene(new Scene(root, 400, 600));
+        } else {
+            currentCartStage.setScene(new Scene(root, 400, 600));
+        }
+        currentCartStage.show();
+    }
+
+    public void refreshCart(Optional<Customer> customer) {
+        if (currentCartStage != null && currentCartStage.isShowing()) {
+            VBox updatedCart = createCartVBox(customer);
+            currentCartScrollPane.setContent(updatedCart);
+        }
+    }
+
+    private void showAlert(String message) {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("Warning");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 }

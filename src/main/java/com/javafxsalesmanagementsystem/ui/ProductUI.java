@@ -112,6 +112,10 @@ public class ProductUI {
                 "-fx-border-width: 50;" +
                 "-fx-border-radius: 50;");
         addToCartButton.setCursor(Cursor.HAND);
+
+        Runnable onRefresh = () -> {
+
+        };
         addToCartButton.setOnAction(e -> {
             try {
                 addToCartUI.addToCart(product, customer).show();

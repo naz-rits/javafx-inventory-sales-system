@@ -31,4 +31,7 @@ public class CustomerService {
     }
 
 
+    public Optional<Customer> findCustomerById(Long id) {
+        return customerRepository.findById(id);
+    }
 }

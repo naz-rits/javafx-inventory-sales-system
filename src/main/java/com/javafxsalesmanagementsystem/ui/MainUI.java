@@ -35,8 +35,7 @@ public class MainUI {
         productUI.context = applicationContext;
         LoginAndRegisterUI loginAndRegisterUI = applicationContext.getBean(LoginAndRegisterUI.class);
         loginAndRegisterUI.applicationContext = applicationContext;
-        AddToCartUI addToCartUI = applicationContext.getBean(AddToCartUI.class);
-        addToCartUI.context = applicationContext;
+
 
         Label label = new Label();
         label.setStyle("-fx-text-fill: white;");
@@ -66,14 +65,17 @@ public class MainUI {
         cart.setCursor(Cursor.HAND);
         cart.setTranslateX(405);
 
-        VBox vBox = new VBox();
         cart.setOnAction(event -> {
-            addToCartUI.cartList(customer).show();
+            AddToCartUI addToCartUI = applicationContext.getBean(AddToCartUI.class);
+            addToCartUI.context = applicationContext;
+            addToCartUI.cartListVBox(customer);
         });
         Button login = new Button("Login");
+
         if (hasLogin) {
             login.setText(customer.get().getUsername());
         }
+
         login.setStyle("-fx-background-color: green;" +
                 "-fx-scale-z: 1.5;" +
                 "-fx-text-fill: white;" +
