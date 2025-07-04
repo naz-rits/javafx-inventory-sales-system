@@ -20,6 +20,7 @@ import javafx.stage.Stage;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.stereotype.Service;
 
+import java.io.FileNotFoundException;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -64,12 +65,33 @@ public class MainUI {
         cart.setFont(Font.font("Segoe UI", FontWeight.BOLD, 20));
         cart.setCursor(Cursor.HAND);
         cart.setTranslateX(405);
-
         cart.setOnAction(event -> {
             AddToCartUI addToCartUI = applicationContext.getBean(AddToCartUI.class);
             addToCartUI.context = applicationContext;
-            addToCartUI.cartListVBox(customer);
+            try {
+                addToCartUI.cartListVBox(customer);
+            } catch (FileNotFoundException e) {
+                throw new RuntimeException(e);
+            }
         });
+
+        Button cartDisabled = new Button("", imageView);
+
+        cartDisabled.setTranslateY(20);
+        cartDisabled.setStyle("-fx-background-color: #d9d9d9;" +
+                "-fx-scale-z: 1.5;" +
+                "-fx-text-fill: white;" +
+                "-fx-border-width: 50;" +
+                "-fx-border-radius: 50;" +
+                "-fx-background-radius: 999;" +
+                "-fx-min-width: 40;" +
+                "-fx-min-height: 40;"
+        );
+        cartDisabled.setPrefWidth(150);
+        cartDisabled.setFont(Font.font("Segoe UI", FontWeight.BOLD, 20));
+        cartDisabled.setCursor(Cursor.HAND);
+        cartDisabled.setTranslateX(405);
+
         Button login = new Button("Login");
 
         if (hasLogin) {
@@ -100,7 +122,7 @@ public class MainUI {
             loginAndRegisterUI.loginStage().show();
         });
 
-        HBox hBox = new HBox(650, cart, login);
+        HBox hBox = new HBox(650, hasLogin ? cart : cartDisabled, login);
         VBox root = new VBox(20, productContainer, hasLogin ? new VBox() : productUI.addButton(primaryStage, onRefresh));
         root.setAlignment(Pos.CENTER);
         VBox roots = new VBox(10, hBox, root);

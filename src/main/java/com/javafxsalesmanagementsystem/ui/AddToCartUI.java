@@ -14,6 +14,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -159,6 +160,8 @@ public class AddToCartUI {
 
                 } catch (NumberFormatException e) {
                     showAlert("Please enter a valid number for quantity");
+                } catch (FileNotFoundException e) {
+                    throw new RuntimeException(e);
                 }
             }
         });
@@ -208,7 +211,7 @@ public class AddToCartUI {
         return stage;
     }
 
-    private VBox createCartVBox(Optional<Customer> customer) {
+    private VBox createCartVBox(Optional<Customer> customer) throws FileNotFoundException {
         VBox root = new VBox(20);
         root.setTranslateX(15);
         AtomicReference<Double> totalPrice = new AtomicReference<>(0.0);
@@ -222,15 +225,39 @@ public class AddToCartUI {
                 for (Sale sale : freshCustomer.getSales()) {
                     for (SaleItem saleItem : sale.getSaleItems()) {
                         CheckBox checkBox = new CheckBox();
-
+                        checkBox.setScaleX(2);
+                        checkBox.setScaleY(2);
+                        checkBox.setTranslateY(12);
+                        checkBox.setCursor(Cursor.HAND);
+                        
                         Product product = saleItem.getProduct();
+                        ImageView imageView = new ImageView(new Image(new FileInputStream(product.getImageUrl())));
+                        imageView.setFitHeight(40);
+                        imageView.setFitWidth(40);
+
                         String productName = product.getProductName();
+
+                        Text productName2 = new Text(productName);
+                        productName2.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+                        productName2.setTranslateY(12);
+
+
                         int quantity = saleItem.getQuantity();
+
+                        Text quantityText = new Text(Integer.toString(quantity) + " piece/s");
+                        quantityText.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+                        quantityText.setTranslateY(12);
+
                         double totalAmount = quantity * product.getPrice();
 
-                        checkBox.setText("Product: " + productName +
+                        Text totalAmountText = new Text("₱" + String.format("%.2f", totalAmount));
+                        totalAmountText.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+                        totalAmountText.setTranslateY(12);
+
+                        /* checkBox.setText(productNameLabel + productName2.getText() +
                                 ", Qty: " + quantity +
                                 ", Subtotal: ₱" + String.format("%.2f", totalAmount));
+                        */
 
                         checkBox.setOnAction(event -> {
                             if (checkBox.isSelected()) {
@@ -240,8 +267,11 @@ public class AddToCartUI {
                             }
                             System.out.println("Running Total: ₱" + String.format("%.2f", totalPrice.get()));
                         });
+                        VBox vBox = new VBox(10, productName2, quantityText);
+                        vBox.setTranslateY(-15);
 
-                        root.getChildren().addAll(new Separator(), checkBox, new Separator());
+                        HBox hBox = new HBox(30, checkBox, imageView, vBox, totalAmountText);
+                        root.getChildren().addAll(new Separator(), hBox, new Separator());
                     }
                 }
             }
@@ -250,30 +280,35 @@ public class AddToCartUI {
         return root;
     }
 
-    public void cartListVBox(Optional<Customer> customer) {
+    public void cartListVBox(Optional<Customer> customer) throws FileNotFoundException {
         VBox cartContent = createCartVBox(customer);
-        cartListScroll(cartContent);
+        cartListScroll(cartContent, customer);
     }
 
-    public void cartListScroll(VBox root) {
+    public void cartListScroll(VBox root, Optional<Customer> customer) throws FileNotFoundException {
         ScrollPane scrollPane = new ScrollPane(root);
         scrollPane.setFitToWidth(true);
 
         currentCartScrollPane = scrollPane;
-        cartListStage(scrollPane);
+        cartListStage(scrollPane, customer);
     }
 
-    public void cartListStage(ScrollPane root) {
+    public void cartListStage(ScrollPane root, Optional<Customer> customer) throws FileNotFoundException {
+        Button button = placeOrderButton(customer);
+
         if (currentCartStage == null) {
             currentCartStage = new Stage();
-            currentCartStage.setScene(new Scene(root, 400, 600));
+            currentCartStage.initModality(Modality.APPLICATION_MODAL);
+
+            currentCartStage.setScene(new Scene(new VBox(40, root, button), 400, 600));
         } else {
-            currentCartStage.setScene(new Scene(root, 400, 600));
+            currentCartStage.setScene(new Scene(new VBox(40, root, button), 400, 600));
         }
+
         currentCartStage.show();
     }
 
-    public void refreshCart(Optional<Customer> customer) {
+    public void refreshCart(Optional<Customer> customer) throws FileNotFoundException {
         if (currentCartStage != null && currentCartStage.isShowing()) {
             VBox updatedCart = createCartVBox(customer);
             currentCartScrollPane.setContent(updatedCart);
@@ -286,5 +321,22 @@ public class AddToCartUI {
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
+    }
+
+    public Button placeOrderButton(Optional<Customer> customer) throws FileNotFoundException {
+        Button button = new Button("Place Order");
+        button.setText("Place Order");
+        button.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+        button.setTranslateX(10);
+        button.setPrefWidth(380);
+        button.setPrefHeight(40);
+        button.setTranslateY(-20);
+        button.setStyle("-fx-background-color: green;" +
+                "-fx-scale-z: 1.5;" +
+                "-fx-text-fill: white;" +
+                "-fx-border-width: 50;" +
+                "-fx-border-radius: 50;");
+        button.setCursor(Cursor.HAND);
+        return button;
     }
 }
