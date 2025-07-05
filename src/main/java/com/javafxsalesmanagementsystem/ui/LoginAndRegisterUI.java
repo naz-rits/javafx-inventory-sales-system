@@ -82,7 +82,7 @@ public class LoginAndRegisterUI {
                 username.clear();
                 password.clear();
             }
-            if (username.getText().equals("admin") && password.getText().equals("admin1234")) {
+            if (username.getText().equals(MainUI.ADMIN_USERNAME) && password.getText().equals(MainUI.ADMIN_PASSWORD)) {
                 Stage loginStage = (Stage) ((Node) e.getSource()).getScene().getWindow();
                 loginStage.close();
 

@@ -2,9 +2,6 @@ package com.javafxsalesmanagementsystem.ui;
 
 import com.javafxsalesmanagementsystem.entity.Customer;
 import com.javafxsalesmanagementsystem.entity.Session;
-import com.sun.javafx.font.freetype.HBGlyphLayout;
-import com.sun.tools.javac.Main;
-import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
@@ -35,8 +32,8 @@ public class MainUI {
 
     public ConfigurableApplicationContext applicationContext;
 
-    private final String ADMIN_USERNAME = "admin";
-    private final String ADMIN_PASSWORD = "admin1234";
+    public static final String ADMIN_USERNAME = "ADMIN";
+    public static final String ADMIN_PASSWORD = "ADMIN1234";
 
     public Stage initialStage(Optional<Customer> customer, boolean isAdmin) {
         Stage primaryStage = new Stage();
@@ -182,12 +179,11 @@ public class MainUI {
         login.setBorder(Border.stroke(Color.BLACK));
         login.setPrefWidth(150);
 
-
-        VBox productContainer = productUI.pagination(hasLogin, customer, isAdmin);
+        VBox productListContainer = new VBox();
+        productUI.pagination(productListContainer, hasLogin, customer, isAdmin);
 
         Runnable onRefresh = () -> {
-            VBox newList = productUI.pagination(hasLogin, customer, isAdmin);
-            productContainer.getChildren().setAll(newList.getChildren());
+            productUI.pagination(productListContainer, hasLogin, customer, isAdmin);
         };
 
         login.setOnAction(e -> {
@@ -198,7 +194,7 @@ public class MainUI {
 
 
         HBox hBox = new HBox(650, hasLogin ? cart : cartDisabled, hasLogin ? new VBox(50, customerName, logoutButton): isAdmin ? new VBox(50, adminName): login);
-        VBox root = new VBox(20, productContainer, hasLogin ? logoutButton : isAdmin ? new HBox(productUI.addButton(primaryStage, onRefresh, isAdmin), logoutButton) : new Label());
+        VBox root = new VBox(20, productListContainer, hasLogin ? logoutButton : isAdmin ? new HBox(productUI.addButton(primaryStage, onRefresh, isAdmin), logoutButton) : new Label());
         root.setAlignment(Pos.CENTER);
         VBox roots = new VBox(10, hBox, root);
         String image = Objects.requireNonNull(getClass().getResource("/images/coffee_background.jpg")).toExternalForm();

@@ -18,6 +18,8 @@ public class SaleItem {
     @Column(name = "price", nullable = false)
     private Double price;
 
+    @Column(name = "ordered", nullable = false)
+    private boolean ordered;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "product_id", nullable = false)

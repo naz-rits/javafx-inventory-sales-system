@@ -3,8 +3,8 @@ package com.javafxsalesmanagementsystem.ui;
 
 import com.javafxsalesmanagementsystem.entity.Customer;
 import com.javafxsalesmanagementsystem.entity.Product;
-import com.javafxsalesmanagementsystem.service.CustomerService;
 import com.javafxsalesmanagementsystem.service.ProductService;
+import com.javafxsalesmanagementsystem.service.SaleItemService;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
@@ -13,10 +13,13 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -34,8 +37,13 @@ import java.util.Optional;
 @Service
 public class ProductUI {
 
+    private final SaleItemService saleItemService;
     public ConfigurableApplicationContext context;
     private String filePath;
+
+    public ProductUI(SaleItemService saleItemService) {
+        this.saleItemService = saleItemService;
+    }
 
 
     public String shortenPath(String path, int maxLength) {
@@ -46,30 +54,31 @@ public class ProductUI {
         return start + "..." + end;
     }
 
-    public VBox pagination(boolean hasLogin, Optional<Customer> customer, boolean isAdmin) {
-        ProductService productService = context.getBean(ProductService.class);
-        CustomerService customerService = context.getBean(CustomerService.class);
+    public void pagination(VBox newVbox, boolean hasLogin, Optional<Customer> customer, boolean isAdmin) {
 
+        ProductService productService = context.getBean(ProductService.class);
+
+        newVbox.getChildren().clear();
         VBox mainContainer = new VBox();
         mainContainer.setAlignment(Pos.CENTER);
         mainContainer.setSpacing(20);
 
 
         Pagination pagination = new Pagination();
-        List<Product> allProducts = productService.getAllProduct();
         int pageSize = 6;
-        int pageCount = (int) Math.ceil((double) allProducts.size() / pageSize);
 
-        pagination.setPageCount(pageCount == 0 ? 1 : pageCount);
+
+
         pagination.setMaxPageIndicatorCount(3);
 
 
-        VBox paginationContainer = new VBox(pagination);
-        paginationContainer.setAlignment(Pos.BOTTOM_CENTER);
-        paginationContainer.setPadding(new Insets(20, 0, 0, 0)); // Top padding
 
 
         pagination.setPageFactory(pageIndex -> {
+            List<Product> allProducts = productService.getAllProduct();
+            int pageCount = (int) Math.ceil((double) allProducts.size() / pageSize);
+            pagination.setPageCount(pageCount == 0 ? 1 : pageCount);
+
             GridPane gridPane = new GridPane();
             gridPane.setAlignment(Pos.CENTER);
             gridPane.setHgap(50);
@@ -80,7 +89,7 @@ public class ProductUI {
 
             for (int i = start, currentIndex = 0; i < end; i++, currentIndex++) {
                 Product product = allProducts.get(i);
-                VBox productBox = createProductBox(product, hasLogin, customer, isAdmin);
+                VBox productBox = createProductBox(product, hasLogin, customer, isAdmin, newVbox);
                 int row = currentIndex / 3;
                 int col = currentIndex % 3;
                 gridPane.add(productBox, col, row);
@@ -89,12 +98,24 @@ public class ProductUI {
             return gridPane;
         });
 
+        VBox paginationContainer = new VBox(pagination);
+        paginationContainer.setAlignment(Pos.BOTTOM_CENTER);
+        paginationContainer.setPadding(new Insets(20, 0, 0, 0)); // Top padding
 
         mainContainer.getChildren().add(paginationContainer);
-        return mainContainer;
+
+        newVbox.getChildren().add(mainContainer);
+
     }
 
-    private VBox createProductBox(Product product, boolean hasLogin, Optional<Customer> customer, boolean isAdmin) {
+    private VBox createProductBox(Product product, boolean hasLogin, Optional<Customer> customer, boolean isAdmin, VBox newVbox) {
+
+        ProductUI productUI = context.getBean(ProductUI.class);
+
+
+        Runnable onRefresh = () -> {
+            productUI.pagination(newVbox, hasLogin, customer, isAdmin);
+        };
 
         AddToCartUI addToCartUI = context.getBean(AddToCartUI.class);
 
@@ -121,7 +142,7 @@ public class ProductUI {
                 throw new RuntimeException(ex);
             }
         });
-        
+
         addToCartButtonDisabled.setStyle("-fx-background-color: green;" +
                 "-fx-scale-z: 1.5;" +
                 "-fx-text-fill: white;" +
@@ -137,9 +158,6 @@ public class ProductUI {
                 "-fx-border-radius: 50;");
         deleteButton.setCursor(Cursor.HAND);
         deleteButton.setPrefWidth(150);
-        deleteButton.setOnAction(e -> {
-
-        });
         try {
             ImageView imageView = new ImageView(new Image(new FileInputStream(product.getImageUrl())));
             imageView.setFitHeight(150);
@@ -166,6 +184,14 @@ public class ProductUI {
             throw new RuntimeException(e);
         }
 
+        deleteButton.setOnAction(e -> {
+            try {
+                deleteStage(product, onRefresh).show();
+            } catch (FileNotFoundException ex) {
+                throw new RuntimeException(ex);
+            }
+
+        });
         return productBox;
     }
 
@@ -290,5 +316,112 @@ public class ProductUI {
 
 
 
+    }
+
+    public Stage deleteStage(Product product, Runnable onSuccess) throws FileNotFoundException{
+        Stage stage = new Stage();
+        SaleItemService saleItemService = context.getBean(SaleItemService.class);
+        ProductService productService = context.getBean(ProductService.class);
+
+        String backgroundImage = Objects.requireNonNull(getClass().getResource("/images/coffee_background.jpg")).toExternalForm();
+
+        FileInputStream image = new FileInputStream(product.getImageUrl());
+        ImageView productImage = new ImageView(new Image(image));
+        productImage.setFitHeight(150);
+        productImage.setFitWidth(150);
+        productImage.setPreserveRatio(false);
+
+
+        Rectangle border = new Rectangle();
+        border.setStroke(Color.WHITE);
+        border.setFill(Color.TRANSPARENT);
+        border.setStrokeWidth(20);
+        border.setArcWidth(10);
+        border.setArcHeight(15);
+
+
+        border.widthProperty().bind(productImage.fitWidthProperty());
+        border.heightProperty().bind(productImage.fitHeightProperty());
+
+        StackPane root = new StackPane(border, productImage);
+        root.setTranslateY(50);
+
+        Rectangle background = new Rectangle(200, 600);
+        background.setStroke(Color.web("#D9D9D9"));
+        background.setFill(Color.web("#D9D9D9"));
+        background.setStrokeWidth(20);
+        background.setArcWidth(5);
+        background.setArcHeight(15);
+        background.setTranslateX(46);
+        background.setTranslateY(69);
+
+        // Product Name Label
+        Label nameLabel = new Label(product.getProductName());
+        nameLabel.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+        nameLabel.setTextFill(Color.web("#333"));
+
+        // Description Text
+        Text descriptionText = new Text(product.getProductDescription());
+        descriptionText.setFont(Font.font("Arial", 14));
+        descriptionText.setWrappingWidth(300);
+        descriptionText.setFill(Color.web("#444"));
+
+        Text price = new Text("₱" + product.getPrice().toString());
+        price.setFont(Font.font("Arial", 14));
+        price.setWrappingWidth(300);
+        price.setFill(Color.web("#444"));
+        price.setTranslateX(130);
+
+        Button button = new Button("Remove product");
+        button.setStyle("-fx-background-color: red;" +
+                "-fx-scale-z: 1.5;" +
+                "-fx-padding: 10;" +
+                "-fx-text-fill: white;" +
+                "-fx-border-width: 50;" +
+                "-fx-border-radius: 50;"
+        );
+        button.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+        button.setTranslateY(5);
+        button.setCursor(Cursor.HAND);
+        button.setPrefWidth(200);
+
+        VBox infoBox = new VBox(10, nameLabel, price, descriptionText, button);
+        infoBox.setTranslateY(75);
+        infoBox.setPadding(new Insets(30));
+        infoBox.setAlignment(Pos.BASELINE_CENTER);
+        infoBox.setPrefWidth(200);
+        infoBox.setStyle("""
+        -fx-background-color: rgba(255,255,255,0.9);
+        -fx-background-radius: 20;
+        -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0.5, 0, 4);
+    """);
+
+        button.setOnAction(event -> {
+            boolean activeProduct = saleItemService.canDeleteProduct(product);
+
+            if (activeProduct) {
+                productService.removeProduct(product);
+                stage.close();
+
+                onSuccess.run();
+            }
+            else {
+                Label cautionLabel = new Label("Can't delete product, this product is still in someone's cart.");
+                cautionLabel.setStyle("-fx-text-fill: red;" );
+                cautionLabel.setFont(Font.font("Arial", 12));
+                cautionLabel.setTranslateY(15);
+                infoBox.getChildren().add(cautionLabel);
+            }
+        });
+
+        VBox roots = new VBox(root, infoBox);
+        roots.setStyle("-fx-background-image: url('" + backgroundImage + "');"
+                + "-fx-background-size: cover;");
+
+        stage.setScene(new Scene(roots, 400, 600));
+        stage.setResizable(false);
+        stage.initModality(Modality.APPLICATION_MODAL);
+
+        return stage;
     }
 }
