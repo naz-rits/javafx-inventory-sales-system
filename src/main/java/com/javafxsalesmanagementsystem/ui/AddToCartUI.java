@@ -40,6 +40,7 @@ public class AddToCartUI {
     public ConfigurableApplicationContext context;
     private Stage currentCartStage;
     private ScrollPane currentCartScrollPane;
+    AtomicReference<Double> totalPrice = new AtomicReference<>(0.0);
 
     public Stage addToCart(Product product, Optional<Customer> customer) throws FileNotFoundException {
         String backgroundImage = Objects.requireNonNull(getClass().getResource("/images/coffee_background.jpg")).toExternalForm();
@@ -115,7 +116,7 @@ public class AddToCartUI {
         button.setCursor(Cursor.HAND);
         button.setPrefWidth(200);
 
-        double totalPrice = product.getPrice() * quantity.getValue();
+        this.totalPrice = new AtomicReference<>(product.getPrice() * quantity.getValue());
         button.setOnAction(event -> {
             if (customer.isPresent()) {
                 String value = quantity.getEditor().getText();
@@ -169,22 +170,26 @@ public class AddToCartUI {
         Text total = new Text();
 
         total.setFont(Font.font("Arial", FontWeight.BOLD, 18));
-        total.setText("₱" + totalPrice);
+        total.setText("₱" + this.totalPrice.get());
         total.setTranslateY(20);
 
         quantity.getEditor().textProperty().addListener((obs, oldText, newText) -> {
             try {
                 int qty = Integer.parseInt(newText);
                 if (qty > 0 && qty <= product.getQuantity()) {
-                    total.setText("₱" + String.format("%.2f", product.getPrice() * qty));
-                }
-                else {
+                    double updatedTotal = product.getPrice() * qty;
+                    total.setText("₱" + String.format("%.2f", updatedTotal));
+                    this.totalPrice.set(updatedTotal);
+                } else {
                     total.setText("Maximum limit reached");
+                    this.totalPrice.set(0.0);
                 }
             } catch (NumberFormatException e) {
-                total.setText("₱ 0.00"); // Or show error/placeholder
+                total.setText("₱ 0.00");
+                this.totalPrice.set(0.0);
             }
         });
+
 
         // VBox container for info
         VBox infoBox = new VBox(10, nameLabel, price, descriptionText, quantityText,
@@ -211,17 +216,20 @@ public class AddToCartUI {
         return stage;
     }
 
-    private VBox createCartVBox(Optional<Customer> customer) throws FileNotFoundException {
+    private VBox createCartVBox(Optional<Customer> customer, Label runningTotalLabel) throws FileNotFoundException {
         VBox root = new VBox(20);
         root.setTranslateX(15);
-        AtomicReference<Double> totalPrice = new AtomicReference<>(0.0);
 
+        this.totalPrice.set(0.0);
         if (customer.isPresent()) {
 
             CustomerService customerService = context.getBean(CustomerService.class);
             Customer freshCustomer = customerService.findCustomerById(customer.get().getId()).orElse(null);
 
+
             if (freshCustomer != null) {
+                runningTotalLabel.setFont(Font.font("Arial", FontWeight.BOLD, 20));
+                runningTotalLabel.setTextFill(Color.web("#333"));
                 for (Sale sale : freshCustomer.getSales()) {
                     for (SaleItem saleItem : sale.getSaleItems()) {
                         CheckBox checkBox = new CheckBox();
@@ -261,11 +269,12 @@ public class AddToCartUI {
 
                         checkBox.setOnAction(event -> {
                             if (checkBox.isSelected()) {
-                                totalPrice.updateAndGet(v -> v + totalAmount);
+                                this.totalPrice.updateAndGet(v -> v + totalAmount);
                             } else {
-                                totalPrice.updateAndGet(v -> v - totalAmount);
+                                this.totalPrice.updateAndGet(v -> v - totalAmount);
                             }
-                            System.out.println("Running Total: ₱" + String.format("%.2f", totalPrice.get()));
+                            runningTotalLabel.setText("₱" + String.format("%.2f", this.totalPrice.get()));
+                            System.out.println("Running Total: ₱" + String.format("%.2f", this.totalPrice.get()));
                         });
                         VBox vBox = new VBox(10, productName2, quantityText);
                         vBox.setTranslateY(-15);
@@ -281,36 +290,52 @@ public class AddToCartUI {
     }
 
     public void cartListVBox(Optional<Customer> customer) throws FileNotFoundException {
-        VBox cartContent = createCartVBox(customer);
-        cartListScroll(cartContent, customer);
+        Label runningTotalLabel = new Label("₱" + String.format("%.2f", this.totalPrice.get()));
+        runningTotalLabel.setFont(Font.font("Arial", FontWeight.BOLD, 20));
+        runningTotalLabel.setTextFill(Color.web("#333"));
+
+        VBox cartContent = createCartVBox(customer, runningTotalLabel);
+        cartListScroll(cartContent, customer, runningTotalLabel);
     }
 
-    public void cartListScroll(VBox root, Optional<Customer> customer) throws FileNotFoundException {
+    public void cartListScroll(VBox root, Optional<Customer> customer, Label runningTotalLabel) throws FileNotFoundException {
         ScrollPane scrollPane = new ScrollPane(root);
         scrollPane.setFitToWidth(true);
 
         currentCartScrollPane = scrollPane;
-        cartListStage(scrollPane, customer);
+        cartListStage(scrollPane, customer, runningTotalLabel);
     }
 
-    public void cartListStage(ScrollPane root, Optional<Customer> customer) throws FileNotFoundException {
+    public void cartListStage(ScrollPane root, Optional<Customer> customer, Label runningTotalLabel) throws FileNotFoundException {
+
+
         Button button = placeOrderButton(customer);
+
+        VBox totalBox = new VBox(30, runningTotalLabel, button);
+        totalBox.setTranslateX(-10);
+        totalBox.setTranslateY(-20);
+        totalBox.setAlignment(Pos.CENTER);
+        totalBox.setPadding(new Insets(10));
+
+        VBox layout = new VBox(40, root, totalBox);
 
         if (currentCartStage == null) {
             currentCartStage = new Stage();
             currentCartStage.initModality(Modality.APPLICATION_MODAL);
-
-            currentCartStage.setScene(new Scene(new VBox(40, root, button), 400, 600));
-        } else {
-            currentCartStage.setScene(new Scene(new VBox(40, root, button), 400, 600));
         }
 
+        currentCartStage.setScene(new Scene(layout, 400, 550));
+        currentCartStage.setResizable(false);
+        currentCartStage.setTitle("Cart");
         currentCartStage.show();
     }
 
     public void refreshCart(Optional<Customer> customer) throws FileNotFoundException {
+        Label runningTotalLabel = new Label("₱" + String.format("%.2f", this.totalPrice.get()));
+        runningTotalLabel.setFont(Font.font("Arial", FontWeight.BOLD, 20));
+        runningTotalLabel.setTextFill(Color.web("#333"));
         if (currentCartStage != null && currentCartStage.isShowing()) {
-            VBox updatedCart = createCartVBox(customer);
+            VBox updatedCart = createCartVBox(customer, runningTotalLabel);
             currentCartScrollPane.setContent(updatedCart);
         }
     }
