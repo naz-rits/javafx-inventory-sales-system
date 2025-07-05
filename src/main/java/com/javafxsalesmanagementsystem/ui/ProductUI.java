@@ -46,7 +46,7 @@ public class ProductUI {
         return start + "..." + end;
     }
 
-    public VBox pagination(boolean hasLogin, Optional<Customer> customer) {
+    public VBox pagination(boolean hasLogin, Optional<Customer> customer, boolean isAdmin) {
         ProductService productService = context.getBean(ProductService.class);
         CustomerService customerService = context.getBean(CustomerService.class);
 
@@ -80,7 +80,7 @@ public class ProductUI {
 
             for (int i = start, currentIndex = 0; i < end; i++, currentIndex++) {
                 Product product = allProducts.get(i);
-                VBox productBox = createProductBox(product, hasLogin, customer);
+                VBox productBox = createProductBox(product, hasLogin, customer, isAdmin);
                 int row = currentIndex / 3;
                 int col = currentIndex % 3;
                 gridPane.add(productBox, col, row);
@@ -94,7 +94,7 @@ public class ProductUI {
         return mainContainer;
     }
 
-    private VBox createProductBox(Product product, boolean hasLogin, Optional<Customer> customer) {
+    private VBox createProductBox(Product product, boolean hasLogin, Optional<Customer> customer, boolean isAdmin) {
 
         AddToCartUI addToCartUI = context.getBean(AddToCartUI.class);
 
@@ -112,10 +112,8 @@ public class ProductUI {
                 "-fx-border-width: 50;" +
                 "-fx-border-radius: 50;");
         addToCartButton.setCursor(Cursor.HAND);
+        addToCartButton.setPrefWidth(150);
 
-        Runnable onRefresh = () -> {
-
-        };
         addToCartButton.setOnAction(e -> {
             try {
                 addToCartUI.addToCart(product, customer).show();
@@ -123,13 +121,25 @@ public class ProductUI {
                 throw new RuntimeException(ex);
             }
         });
+        
         addToCartButtonDisabled.setStyle("-fx-background-color: green;" +
                 "-fx-scale-z: 1.5;" +
                 "-fx-text-fill: white;" +
                 "-fx-border-width: 50;" +
                 "-fx-border-radius: 50;");
-        addToCartButton.setPrefWidth(150);
 
+
+        Button deleteButton = new Button("Delete");
+        deleteButton.setStyle("-fx-background-color: red;" +
+                "-fx-scale-z: 1.5;" +
+                "-fx-text-fill: white;" +
+                "-fx-border-width: 50;" +
+                "-fx-border-radius: 50;");
+        deleteButton.setCursor(Cursor.HAND);
+        deleteButton.setPrefWidth(150);
+        deleteButton.setOnAction(e -> {
+
+        });
         try {
             ImageView imageView = new ImageView(new Image(new FileInputStream(product.getImageUrl())));
             imageView.setFitHeight(150);
@@ -140,7 +150,7 @@ public class ProductUI {
                     imageView,
                     Objects.equals(product.getCategory(), "Hot Coffee") ? new Label("☕ " + product.getProductName()) : new Label("❄️ " + product.getProductName()),
                     new Label("₱" + product.getPrice()),
-                    hasLogin ? addToCartButton : addToCartButtonDisabled);
+                    hasLogin ? addToCartButton : isAdmin ? deleteButton : addToCartButtonDisabled);
 
             productBox.setStyle(
                     "-fx-border-color: #ccc;" +
@@ -159,7 +169,7 @@ public class ProductUI {
         return productBox;
     }
 
-    public Button addButton(Stage ownerStage, Runnable onSuccess) {
+    public Button addButton(Stage ownerStage, Runnable onSuccess, boolean isAdmin) {
         Button button = new Button("Add Product");
         button.setStyle("-fx-background-color: green;" +
                         "-fx-scale-z: 1.5;" +
@@ -173,6 +183,9 @@ public class ProductUI {
 
         });
 
+        if (isAdmin) {
+            button.setTranslateX(330);
+        }
         return button;
     }
 

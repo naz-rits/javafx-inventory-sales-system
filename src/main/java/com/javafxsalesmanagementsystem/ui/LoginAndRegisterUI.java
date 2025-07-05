@@ -78,7 +78,22 @@ public class LoginAndRegisterUI {
 
 
                 Session.currentUser = customer;
-                mainUI.initialStage(customer).show();
+                mainUI.initialStage(customer, false).show();
+                username.clear();
+                password.clear();
+            }
+            if (username.getText().equals("admin") && password.getText().equals("admin1234")) {
+                Stage loginStage = (Stage) ((Node) e.getSource()).getScene().getWindow();
+                loginStage.close();
+
+                List<Window> windows = new ArrayList<>(Window.getWindows());
+                for (Window window : windows) {
+                    if (window instanceof Stage stage1 && stage1.isShowing()) {
+                        stage1.close();
+                    }
+                }
+                Session.currentUser = Optional.empty();
+                mainUI.initialStage(Optional.empty(), true).show();
                 username.clear();
                 password.clear();
             }

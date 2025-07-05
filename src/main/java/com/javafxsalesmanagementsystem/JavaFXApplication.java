@@ -42,7 +42,7 @@ public class JavaFXApplication extends Application {
         MainUI mainUI = applicationContext.getBean(MainUI.class);
         mainUI.applicationContext = applicationContext;
 
-        Stage stage = mainUI.initialStage(Optional.empty());
+        Stage stage = mainUI.initialStage(Optional.empty(), false);
         stage.show();
     }
 
