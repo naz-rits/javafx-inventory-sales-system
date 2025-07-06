@@ -54,7 +54,7 @@ public class ProductUI {
         return start + "..." + end;
     }
 
-    public void pagination(VBox newVbox, boolean hasLogin, Optional<Customer> customer, boolean isAdmin) {
+    public void pagination(String categories, VBox newVbox, boolean hasLogin, Optional<Customer> customer, boolean isAdmin) {
 
         ProductService productService = context.getBean(ProductService.class);
 
@@ -75,6 +75,30 @@ public class ProductUI {
 
 
         pagination.setPageFactory(pageIndex -> {
+            if (categories.equals("Hot Coffee") || categories.equals("Iced Coffee")) {
+                List<Product> products = productService.findByCategory(categories);
+                int pageCount = (int) Math.ceil((double) products.size() / pageSize);
+                pagination.setPageCount(pageCount == 0 ? 1 : pageCount);
+
+                GridPane gridPane = new GridPane();
+                gridPane.setAlignment(Pos.CENTER);
+                gridPane.setHgap(50);
+                gridPane.setVgap(20);
+
+                int start = pageIndex * pageSize;
+                int end = Math.min(start + pageSize, products.size());
+
+                for (int i = start, currentIndex = 0; i < end; i++, currentIndex++) {
+                    Product product = products.get(i);
+                    VBox productBox = createProductBox(categories, product, hasLogin, customer, isAdmin, newVbox);
+                    int row = currentIndex / 3;
+                    int col = currentIndex % 3;
+                    gridPane.add(productBox, col, row);
+                }
+
+                return gridPane;
+            }
+
             List<Product> allProducts = productService.getAllProduct();
             int pageCount = (int) Math.ceil((double) allProducts.size() / pageSize);
             pagination.setPageCount(pageCount == 0 ? 1 : pageCount);
@@ -89,7 +113,7 @@ public class ProductUI {
 
             for (int i = start, currentIndex = 0; i < end; i++, currentIndex++) {
                 Product product = allProducts.get(i);
-                VBox productBox = createProductBox(product, hasLogin, customer, isAdmin, newVbox);
+                VBox productBox = createProductBox(categories, product, hasLogin, customer, isAdmin, newVbox);
                 int row = currentIndex / 3;
                 int col = currentIndex % 3;
                 gridPane.add(productBox, col, row);
@@ -108,16 +132,17 @@ public class ProductUI {
 
     }
 
-    private VBox createProductBox(Product product, boolean hasLogin, Optional<Customer> customer, boolean isAdmin, VBox newVbox) {
+    private VBox createProductBox(String categories, Product product, boolean hasLogin, Optional<Customer> customer, boolean isAdmin, VBox newVbox) {
 
         ProductUI productUI = context.getBean(ProductUI.class);
 
 
         Runnable onRefresh = () -> {
-            productUI.pagination(newVbox, hasLogin, customer, isAdmin);
+            productUI.pagination(categories, newVbox, hasLogin, customer, isAdmin);
         };
 
         AddToCartUI addToCartUI = context.getBean(AddToCartUI.class);
+        addToCartUI.context = context;
 
         VBox productBox = new VBox(10);
         productBox.setAlignment(Pos.CENTER);

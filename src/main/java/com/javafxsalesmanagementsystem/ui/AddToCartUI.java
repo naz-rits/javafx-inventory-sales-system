@@ -123,7 +123,6 @@ public class AddToCartUI {
         button.setCursor(Cursor.HAND);
         button.setPrefWidth(200);
 
-        this.totalPrice = new AtomicReference<>(product.getPrice() * quantity.getValue());
         button.setOnAction(event -> {
             if (customer.isPresent()) {
                 String value = quantity.getEditor().getText();
@@ -186,7 +185,6 @@ public class AddToCartUI {
                 if (qty > 0 && qty <= product.getQuantity()) {
                     double updatedTotal = product.getPrice() * qty;
                     total.setText("₱" + String.format("%.2f", updatedTotal));
-                    this.totalPrice.set(updatedTotal);
                 } else {
                     total.setText("Maximum limit reached");
                     this.totalPrice.set(0.0);
@@ -240,6 +238,7 @@ public class AddToCartUI {
                 for (Sale sale : freshCustomer.getSales()) {
                     for (SaleItem saleItem : sale.getSaleItems()) {
                         CheckBox checkBox = new CheckBox();
+                        checkBox.setSelected(false);
                         checkBox.setScaleX(2);
                         checkBox.setScaleY(2);
                         checkBox.setTranslateY(12);
@@ -277,7 +276,8 @@ public class AddToCartUI {
                         checkBox.setOnAction(event -> {
                             if (checkBox.isSelected()) {
                                 this.totalPrice.updateAndGet(v -> v + totalAmount);
-                            } else {
+                            }
+                            else {
                                 this.totalPrice.updateAndGet(v -> v - totalAmount);
                             }
                             runningTotalLabel.setText("₱" + String.format("%.2f", this.totalPrice.get()));
@@ -299,9 +299,19 @@ public class AddToCartUI {
                         removeFromCartButton.setPrefWidth(150);
                         removeFromCartButton.setTranslateX(110);
                         removeFromCartButton.setOnAction(event -> {
-
+                            if (checkBox.isSelected()) {
+                                this.totalPrice.updateAndGet(v -> v - totalAmount);
+                                runningTotalLabel.setText("₱" + String.format("%.2f", this.totalPrice.get()));
+                            }
                             saleService.removeSales(sale);
                             saleItemService.removeSaleItem(saleItem);
+
+
+                            try {
+                                refreshCart(customer);
+                            } catch (FileNotFoundException e) {
+                                throw new RuntimeException(e);
+                            }
 
                             Customer updatedCustomer = customerService.findCustomerById(freshCustomer.getId()).orElse(null);
                             Optional<Customer> updatedCustomerOpt = Optional.ofNullable(updatedCustomer);

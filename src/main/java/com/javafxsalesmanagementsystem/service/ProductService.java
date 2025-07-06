@@ -32,4 +32,11 @@ public class ProductService {
         iterable.forEach(list::add);
         return list;
     }
+
+    public List<Product> findByCategory(String category) {
+        Iterable<Product> iterable = productRepository.findByCategory(category);
+        List<Product> list = new ArrayList<>();
+        iterable.forEach(list::add);
+        return list;
+    }
 }

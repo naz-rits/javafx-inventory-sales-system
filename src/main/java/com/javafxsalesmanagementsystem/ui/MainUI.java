@@ -7,6 +7,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -69,7 +70,7 @@ public class MainUI {
         cart.setPrefWidth(150);
         cart.setFont(Font.font("Segue UI", FontWeight.BOLD, 20));
         cart.setCursor(Cursor.HAND);
-        cart.setTranslateX(405);
+        cart.setTranslateX(110);
         cart.setOnAction(event -> {
             AddToCartUI addToCartUI = applicationContext.getBean(AddToCartUI.class);
             addToCartUI.context = applicationContext;
@@ -95,7 +96,7 @@ public class MainUI {
         cartDisabled.setPrefWidth(150);
         cartDisabled.setFont(Font.font("Segoe UI", FontWeight.BOLD, 20));
         cartDisabled.setCursor(Cursor.HAND);
-        cartDisabled.setTranslateX(405);
+        cartDisabled.setTranslateX(110);
 
         Button logoutButton = new Button("Logout");
 
@@ -118,6 +119,7 @@ public class MainUI {
                 }
             }
             MainUI mainUI = applicationContext.getBean(MainUI.class);
+            mainUI.applicationContext = applicationContext;
 
             Session.currentUser = Optional.empty();
             mainUI.initialStage(Optional.empty(), false).show();
@@ -134,7 +136,7 @@ public class MainUI {
             customerName.setFont(Font.font("Segoe UI", FontWeight.BOLD, 30));
             customerName.setTextFill(Color.BLACK);
             customerName.setTranslateY(30);
-            customerName.setTranslateX(25);
+            customerName.setTranslateX(-1);
             customerName.setBackground(Background.fill(Color.DARKGRAY));
             customerName.setPadding( new Insets(5));
             customerName.setBorder(Border.stroke(Color.DARKGRAY));
@@ -151,7 +153,7 @@ public class MainUI {
             adminName.setFont(Font.font("Segoe UI", FontWeight.BOLD, 30));
             adminName.setTextFill(Color.BLACK);
             adminName.setTranslateY(30);
-            adminName.setTranslateX(25);
+            adminName.setTranslateX(15);
             adminName.setBackground(Background.fill(Color.DARKGRAY));
             adminName.setPadding( new Insets(5));
             adminName.setBorder(Border.stroke(Color.DARKGRAY));
@@ -174,21 +176,34 @@ public class MainUI {
         );
         login.setFont(Font.font("Segoe UI", FontWeight.BOLD, 20));
         login.setCursor(Cursor.HAND);
-        login.setTranslateY(20);
+        login.setTranslateY(30);
         login.setBorder(Border.stroke(Color.BLACK));
         login.setPrefWidth(150);
+        login.setTranslateX(-18);
+
+        ChoiceBox<String> categories = new ChoiceBox<>();
+        categories.getItems().addAll("All", "Hot Coffee", "Iced Coffee");
+        categories.setValue("All");
+        categories.setTranslateY(40);
+        categories.setTranslateX(210);
 
         VBox productListContainer = new VBox();
-        productUI.pagination(productListContainer, hasLogin, customer, isAdmin);
 
-        Runnable onRefresh = () -> productUI.pagination(productListContainer, hasLogin, customer, isAdmin);
+        productUI.pagination(categories.getValue(), productListContainer, hasLogin, customer, isAdmin);
+        Runnable onRefresh = () -> productUI.pagination(categories.getValue(), productListContainer, hasLogin, customer, isAdmin);
+
+        categories.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            productUI.pagination(newValue, productListContainer, hasLogin, customer, isAdmin);
+        });
+
+
 
         login.setOnAction(e -> loginAndRegisterUI.loginStage().show());
 
 
 
 
-        HBox hBox = new HBox(650, hasLogin ? cart : cartDisabled, hasLogin ? new VBox(50, customerName, logoutButton): isAdmin ? new VBox(50, adminName): login);
+        HBox hBox = new HBox(200, categories, hasLogin ? cart : cartDisabled, hasLogin ? new VBox(50, customerName, logoutButton): isAdmin ? new VBox(50, adminName): login);
         VBox root = new VBox(20, productListContainer, hasLogin ? logoutButton : isAdmin ? new HBox(productUI.addButton(primaryStage, onRefresh, true), logoutButton) : new Label());
         root.setAlignment(Pos.CENTER);
         VBox roots = new VBox(10, hBox, root);
