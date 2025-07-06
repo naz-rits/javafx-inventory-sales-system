@@ -39,14 +39,16 @@ public class AddToCartUI {
 
     private final SaleService saleService;
     private final SaleItemService saleItemService;
+    private final CustomerService customerService;
     public ConfigurableApplicationContext context;
     private Stage currentCartStage;
     private ScrollPane currentCartScrollPane;
     AtomicReference<Double> totalPrice = new AtomicReference<>(0.0);
 
-    public AddToCartUI(SaleService saleService, SaleItemService saleItemService) {
+    public AddToCartUI(SaleService saleService, SaleItemService saleItemService, CustomerService customerService) {
         this.saleService = saleService;
         this.saleItemService = saleItemService;
+        this.customerService = customerService;
     }
 
     public Stage addToCart(Product product, Optional<Customer> customer) throws FileNotFoundException {
@@ -268,10 +270,6 @@ public class AddToCartUI {
                         totalAmountText.setFont(Font.font("Arial", FontWeight.BOLD, 18));
                         totalAmountText.setTranslateY(12);
 
-                        /* checkBox.setText(productNameLabel + productName2.getText() +
-                                ", Qty: " + quantity +
-                                ", Subtotal: ₱" + String.format("%.2f", totalAmount));
-                        */
 
                         checkBox.setOnAction(event -> {
                             if (checkBox.isSelected()) {
@@ -291,6 +289,7 @@ public class AddToCartUI {
                         ImageView imageView2 = new ImageView(new Image(new FileInputStream("src/main/resources/images/trashbin.png")));
                         imageView2.setFitHeight(30);
                         imageView2.setFitWidth(30);
+
                         Button removeFromCartButton = new Button("", imageView2);
 
                         removeFromCartButton.setStyle("-fx-background-color: red;" +
@@ -353,7 +352,7 @@ public class AddToCartUI {
     public void cartListStage(ScrollPane root, Optional<Customer> customer, Label runningTotalLabel) throws FileNotFoundException {
 
 
-        Button button = placeOrderButton(customer);
+        Button button = placeOrderButton(customer, runningTotalLabel);
 
         VBox totalBox = new VBox(30, runningTotalLabel, button);
         totalBox.setTranslateX(-10);
@@ -375,12 +374,27 @@ public class AddToCartUI {
     }
 
     public void refreshCart(Optional<Customer> customer) throws FileNotFoundException {
-        Label runningTotalLabel = new Label("₱" + String.format("%.2f", this.totalPrice.get()));
-        runningTotalLabel.setFont(Font.font("Arial", FontWeight.BOLD, 20));
-        runningTotalLabel.setTextFill(Color.web("#333"));
         if (currentCartStage != null && currentCartStage.isShowing()) {
+            Label runningTotalLabel = new Label("₱" + String.format("%.2f", this.totalPrice.get()));
+            runningTotalLabel.setFont(Font.font("Arial", FontWeight.BOLD, 20));
+            runningTotalLabel.setTextFill(Color.web("#333"));
+
             VBox updatedCart = createCartVBox(customer, runningTotalLabel);
-            currentCartScrollPane.setContent(updatedCart);
+            ScrollPane updatedScrollPane = new ScrollPane(updatedCart);
+            updatedScrollPane.setFitToWidth(true);
+            currentCartScrollPane = updatedScrollPane;
+
+            Button button = placeOrderButton(customer, runningTotalLabel);
+
+            VBox totalBox = new VBox(30, runningTotalLabel, button);
+            totalBox.setTranslateX(-10);
+            totalBox.setTranslateY(-20);
+            totalBox.setAlignment(Pos.CENTER);
+            totalBox.setPadding(new Insets(10));
+
+            VBox layout = new VBox(40, updatedScrollPane, totalBox);
+
+            currentCartStage.setScene(new Scene(layout, 400, 550));
         }
     }
 
@@ -392,9 +406,18 @@ public class AddToCartUI {
         alert.showAndWait();
     }
 
-    public Button placeOrderButton(Optional<Customer> customer) throws FileNotFoundException {
+    public Button placeOrderButton(Optional<Customer> customer, Label runningTotalLabel) throws FileNotFoundException {
+
+        Customer freshCustomer = customerService.findCustomerById(customer.get().getId()).orElse(null);
         Button button = new Button("Place Order");
-        button.setText("Place Order");
+
+        assert freshCustomer != null;
+        if (freshCustomer.getSales().isEmpty()) {
+            button.setDisable(true);
+        }
+        else {
+            button.setDisable(false);
+        }
         button.setFont(Font.font("Arial", FontWeight.BOLD, 18));
         button.setTranslateX(10);
         button.setPrefWidth(380);
@@ -406,6 +429,8 @@ public class AddToCartUI {
                 "-fx-border-width: 50;" +
                 "-fx-border-radius: 50;");
         button.setCursor(Cursor.HAND);
+
+
         return button;
     }
 }

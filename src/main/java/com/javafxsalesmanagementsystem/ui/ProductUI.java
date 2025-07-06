@@ -20,8 +20,10 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
+import javafx.stage.Popup;
 import javafx.stage.Stage;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.stereotype.Service;
@@ -90,7 +92,12 @@ public class ProductUI {
 
                 for (int i = start, currentIndex = 0; i < end; i++, currentIndex++) {
                     Product product = products.get(i);
-                    VBox productBox = createProductBox(categories, product, hasLogin, customer, isAdmin, newVbox);
+                    VBox productBox = null;
+                    try {
+                        productBox = createProductBox(categories, product, hasLogin, customer, isAdmin, newVbox);
+                    } catch (FileNotFoundException e) {
+                        throw new RuntimeException(e);
+                    }
                     int row = currentIndex / 3;
                     int col = currentIndex % 3;
                     gridPane.add(productBox, col, row);
@@ -113,7 +120,12 @@ public class ProductUI {
 
             for (int i = start, currentIndex = 0; i < end; i++, currentIndex++) {
                 Product product = allProducts.get(i);
-                VBox productBox = createProductBox(categories, product, hasLogin, customer, isAdmin, newVbox);
+                VBox productBox = null;
+                try {
+                    productBox = createProductBox(categories, product, hasLogin, customer, isAdmin, newVbox);
+                } catch (FileNotFoundException e) {
+                    throw new RuntimeException(e);
+                }
                 int row = currentIndex / 3;
                 int col = currentIndex % 3;
                 gridPane.add(productBox, col, row);
@@ -132,7 +144,7 @@ public class ProductUI {
 
     }
 
-    private VBox createProductBox(String categories, Product product, boolean hasLogin, Optional<Customer> customer, boolean isAdmin, VBox newVbox) {
+    private VBox createProductBox(String categories, Product product, boolean hasLogin, Optional<Customer> customer, boolean isAdmin, VBox newVbox) throws FileNotFoundException {
 
         ProductUI productUI = context.getBean(ProductUI.class);
 
@@ -217,9 +229,58 @@ public class ProductUI {
             }
 
         });
+        Popup popingPopup = new Popup();
+        popingPopup.getContent().add(forPop(product));
+
+        productBox.setOnMouseEntered(event -> {
+            productBox.setStyle("-fx-border-color: #ccc;" +
+                    "-fx-border-width: 1;" +
+                    "-fx-background-color: #ffffff;" +
+                    "-fx-padding: 10;" +
+                    "-fx-border-radius: 8;" +
+                    "-fx-background-radius: 8;" +
+                    "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 5, 0, 0, 2);" +
+                    "-fx-scale-x: 1.03;" +
+                    "-fx-scale-y: 1.03;");
+            popingPopup.show(productBox, event.getScreenX(), event.getScreenY());
+        });
+
+        productBox.setOnMouseExited(event -> {
+            productBox.setStyle("-fx-border-color: #ccc;" +
+                    "-fx-border-width: 1;" +
+                    "-fx-background-color: #ffffff;" +
+                    "-fx-padding: 10;" +
+                    "-fx-border-radius: 8;" +
+                    "-fx-background-radius: 8;" +
+                    "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 5, 0, 0, 2);" +
+                    "-fx-scale-x: 1.00;" +
+                    "-fx-scale-y: 1.00;");
+            popingPopup.hide();
+        });
+
         return productBox;
     }
 
+    public VBox forPop(Product product) throws FileNotFoundException {
+        ImageView imageView = new ImageView(new Image(new FileInputStream(product.getImageUrl())));
+        imageView.setFitHeight(70);
+        imageView.setFitWidth(70);
+
+        VBox productBox = new VBox(10);
+        productBox.setAlignment(Pos.CENTER);
+        productBox.setPrefWidth(170);
+        productBox.setStyle("-fx-background-color: #d9d9d9;");
+
+        Label productName = new Label("☕" + product.getProductName());
+        Label price = new Label("₱" + product.getPrice());
+        Label description = new Label(product.getProductDescription());
+        description.setWrapText(true);
+        description.setAlignment(Pos.CENTER);
+        productBox.setPadding(new Insets(30));
+        productBox.getChildren().addAll(imageView, productName, price, description);
+
+        return productBox;
+    }
     public Button addButton(Stage ownerStage, Runnable onSuccess, boolean isAdmin) {
         Button button = new Button("Add Product");
         button.setStyle("-fx-background-color: green;" +
@@ -390,7 +451,9 @@ public class ProductUI {
         descriptionText.setFont(Font.font("Arial", 14));
         descriptionText.setWrappingWidth(300);
         descriptionText.setFill(Color.web("#444"));
-
+        descriptionText.setTextAlignment(TextAlignment.CENTER);
+        descriptionText.setTranslateY(-10);
+        
         Text price = new Text("₱" + product.getPrice().toString());
         price.setFont(Font.font("Arial", 14));
         price.setWrappingWidth(300);
