@@ -20,4 +20,8 @@ public class SaleService {
         saleRepository.save(sale);
     }
 
+    public void removeSales (Sale sale){
+        saleRepository.delete(sale);
+    }
+
 }

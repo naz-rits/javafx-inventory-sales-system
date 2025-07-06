@@ -16,7 +16,6 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import javafx.stage.Window;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.stereotype.Service;
 
@@ -26,7 +25,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-@Slf4j
+
 @Service
 public class MainUI {
 
@@ -68,7 +67,7 @@ public class MainUI {
                         "-fx-min-height: 40;"
         );
         cart.setPrefWidth(150);
-        cart.setFont(Font.font("Segoe UI", FontWeight.BOLD, 20));
+        cart.setFont(Font.font("Segue UI", FontWeight.BOLD, 20));
         cart.setCursor(Cursor.HAND);
         cart.setTranslateX(405);
         cart.setOnAction(event -> {
@@ -182,19 +181,15 @@ public class MainUI {
         VBox productListContainer = new VBox();
         productUI.pagination(productListContainer, hasLogin, customer, isAdmin);
 
-        Runnable onRefresh = () -> {
-            productUI.pagination(productListContainer, hasLogin, customer, isAdmin);
-        };
+        Runnable onRefresh = () -> productUI.pagination(productListContainer, hasLogin, customer, isAdmin);
 
-        login.setOnAction(e -> {
-            loginAndRegisterUI.loginStage().show();
-        });
+        login.setOnAction(e -> loginAndRegisterUI.loginStage().show());
 
 
 
 
         HBox hBox = new HBox(650, hasLogin ? cart : cartDisabled, hasLogin ? new VBox(50, customerName, logoutButton): isAdmin ? new VBox(50, adminName): login);
-        VBox root = new VBox(20, productListContainer, hasLogin ? logoutButton : isAdmin ? new HBox(productUI.addButton(primaryStage, onRefresh, isAdmin), logoutButton) : new Label());
+        VBox root = new VBox(20, productListContainer, hasLogin ? logoutButton : isAdmin ? new HBox(productUI.addButton(primaryStage, onRefresh, true), logoutButton) : new Label());
         root.setAlignment(Pos.CENTER);
         VBox roots = new VBox(10, hBox, root);
         String image = Objects.requireNonNull(getClass().getResource("/images/coffee_background.jpg")).toExternalForm();

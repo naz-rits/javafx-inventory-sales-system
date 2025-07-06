@@ -29,4 +29,8 @@ public class SaleItemService {
     public void saveSaleItem (SaleItem saleItem){
         saleItemRepository.save(saleItem);
     }
+
+    public void removeSaleItem(SaleItem saleItem){
+        saleItemRepository.delete(saleItem);
+    }
 }

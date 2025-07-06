@@ -37,10 +37,17 @@ import java.util.concurrent.atomic.AtomicReference;
 @Service
 public class AddToCartUI {
 
+    private final SaleService saleService;
+    private final SaleItemService saleItemService;
     public ConfigurableApplicationContext context;
     private Stage currentCartStage;
     private ScrollPane currentCartScrollPane;
     AtomicReference<Double> totalPrice = new AtomicReference<>(0.0);
+
+    public AddToCartUI(SaleService saleService, SaleItemService saleItemService) {
+        this.saleService = saleService;
+        this.saleItemService = saleItemService;
+    }
 
     public Stage addToCart(Product product, Optional<Customer> customer) throws FileNotFoundException {
         String backgroundImage = Objects.requireNonNull(getClass().getResource("/images/coffee_background.jpg")).toExternalForm();
@@ -280,7 +287,34 @@ public class AddToCartUI {
                         vBox.setTranslateY(-15);
 
                         HBox hBox = new HBox(30, checkBox, imageView, vBox, totalAmountText);
-                        root.getChildren().addAll(new Separator(), hBox, new Separator());
+
+                        ImageView imageView2 = new ImageView(new Image(new FileInputStream("src/main/resources/images/trashbin.png")));
+                        imageView2.setFitHeight(30);
+                        imageView2.setFitWidth(30);
+                        Button removeFromCartButton = new Button("", imageView2);
+
+                        removeFromCartButton.setStyle("-fx-background-color: red;" +
+                                                      "-fx-text-fill: white;");
+                        removeFromCartButton.setCursor(Cursor.HAND);
+                        removeFromCartButton.setPrefWidth(150);
+                        removeFromCartButton.setTranslateX(110);
+                        removeFromCartButton.setOnAction(event -> {
+
+                            saleService.removeSales(sale);
+                            saleItemService.removeSaleItem(saleItem);
+
+                            Customer updatedCustomer = customerService.findCustomerById(freshCustomer.getId()).orElse(null);
+                            Optional<Customer> updatedCustomerOpt = Optional.ofNullable(updatedCustomer);
+
+                            // Refresh the cart display
+                            try {
+                                refreshCart(updatedCustomerOpt);
+                            } catch (FileNotFoundException e) {
+                                throw new RuntimeException(e);
+                            }
+                            
+                        });
+                        root.getChildren().addAll(new Separator(), hBox, removeFromCartButton, new Separator());
                     }
                 }
             }
