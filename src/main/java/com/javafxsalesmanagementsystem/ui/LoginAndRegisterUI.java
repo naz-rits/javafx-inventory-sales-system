@@ -15,6 +15,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.scene.text.TextAlignment;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
@@ -63,6 +64,13 @@ public class LoginAndRegisterUI {
                 "-fx-border-radius: 50;"
         );
         login.setPrefWidth(150);
+        VBox root = new VBox();
+
+        Label errorLogin = new Label("Invalid username or password");
+        errorLogin.setStyle("-fx-text-fill: red;");
+        errorLogin.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 20));
+        errorLogin.setTextAlignment(TextAlignment.CENTER);
+        errorLogin.setTranslateY(40);
         login.setOnAction(e -> {
             Optional<Customer> customer = customerService.findCustomerByUsernameAndPassword(username.getText(), password.getText());
             if (customer.isPresent()) {
@@ -81,6 +89,13 @@ public class LoginAndRegisterUI {
                 mainUI.initialStage(customer, false).show();
                 username.clear();
                 password.clear();
+            }
+
+            if (customer.isEmpty()) {
+                if (!root.getChildren().contains(errorLogin)) {
+                    root.getChildren().add(errorLogin);
+                }
+
             }
             if (username.getText().equals(MainUI.ADMIN_USERNAME) && password.getText().equals(MainUI.ADMIN_PASSWORD)) {
                 Stage loginStage = (Stage) ((Node) e.getSource()).getScene().getWindow();
@@ -122,7 +137,7 @@ public class LoginAndRegisterUI {
         toolBar.setScaleX(1.5);
         toolBar.setScaleY(1.5);
 
-        VBox root = new VBox();
+
         root.setAlignment(Pos.CENTER);
         root.setSpacing(10);
         root.getChildren().addAll(toolBar);
@@ -160,15 +175,31 @@ public class LoginAndRegisterUI {
                 "-fx-border-radius: 50;");
         register.setPrefWidth(150);
         register.setCursor(Cursor.HAND);
-        register.setOnAction(e -> {
-            customer.setFirstName(firstName.getText());
-            customer.setLastName(lastName.getText());
-            customer.setContactNumber(contactNumber.getText());
-            customer.setUsername(username.getText());
-            customer.setPassword(password.getText());
+        VBox root = new VBox();
 
-            customerService.addCustomer(customer);
-            stage.close();
+        Label errorLabel = new Label("Username has already been taken");
+        errorLabel.setStyle("-fx-text-fill: red;");
+        errorLabel.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 20));
+        errorLabel.setTextAlignment(TextAlignment.CENTER);
+        errorLabel.setTranslateY(65);
+        register.setOnAction(e -> {
+            Optional<Customer> customers = customerService.findCustomerByUsername(username.getText());
+            if (customers.isPresent()) {
+                if (!root.getChildren().contains(errorLabel)) {
+                    root.getChildren().add(errorLabel);
+                }
+            }
+            else {
+                customer.setFirstName(firstName.getText());
+                customer.setLastName(lastName.getText());
+                customer.setContactNumber(contactNumber.getText());
+                customer.setUsername(username.getText());
+                customer.setPassword(password.getText());
+
+                customerService.addCustomer(customer);
+                stage.close();
+            }
+
         });
         ToolBar toolBar = new ToolBar();
         toolBar.setScaleY(1.5);
@@ -190,8 +221,7 @@ public class LoginAndRegisterUI {
 
         );
 
-        VBox root = new VBox(toolBar);
-
+        root.getChildren().addAll(toolBar);
 
         root.setStyle("-fx-background-image: url('" + image + "');"
                 + "-fx-background-size: cover;");

@@ -34,4 +34,8 @@ public class CustomerService {
     public Optional<Customer> findCustomerById(Long id) {
         return customerRepository.findById(id);
     }
+
+    public Optional<Customer> findCustomerByUsername(String username) {
+        return customerRepository.findByUsername(username);
+    }
 }
