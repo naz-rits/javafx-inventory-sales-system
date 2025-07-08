@@ -7,6 +7,10 @@ import com.javafxsalesmanagementsystem.entity.SaleItem;
 import com.javafxsalesmanagementsystem.service.CustomerService;
 import com.javafxsalesmanagementsystem.service.SaleItemService;
 import com.javafxsalesmanagementsystem.service.SaleService;
+import javafx.beans.Observable;
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
@@ -32,6 +36,7 @@ import java.io.FileNotFoundException;
 import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Service
@@ -43,7 +48,8 @@ public class AddToCartUI {
     public ConfigurableApplicationContext context;
     private Stage currentCartStage;
     private ScrollPane currentCartScrollPane;
-    AtomicReference<Double> totalPrice = new AtomicReference<>(0.0);
+    DoubleProperty totalPrice = new SimpleDoubleProperty(0.0);
+
 
     public AddToCartUI(SaleService saleService, SaleItemService saleItemService, CustomerService customerService) {
         this.saleService = saleService;
@@ -273,10 +279,10 @@ public class AddToCartUI {
 
                         checkBox.setOnAction(event -> {
                             if (checkBox.isSelected()) {
-                                this.totalPrice.updateAndGet(v -> v + totalAmount);
+                                this.totalPrice.set(this.totalPrice.get() + totalAmount);
                             }
                             else {
-                                this.totalPrice.updateAndGet(v -> v - totalAmount);
+                                this.totalPrice.set(this.totalPrice.get() - totalAmount);
                             }
                             runningTotalLabel.setText("₱" + String.format("%.2f", this.totalPrice.get()));
                             System.out.println("Running Total: ₱" + String.format("%.2f", this.totalPrice.get()));
@@ -299,7 +305,7 @@ public class AddToCartUI {
                         removeFromCartButton.setTranslateX(110);
                         removeFromCartButton.setOnAction(event -> {
                             if (checkBox.isSelected()) {
-                                this.totalPrice.updateAndGet(v -> v - totalAmount);
+                                this.totalPrice.set(this.totalPrice.get() + totalAmount);
                                 runningTotalLabel.setText("₱" + String.format("%.2f", this.totalPrice.get()));
                             }
                             saleService.removeSales(sale);
@@ -352,7 +358,7 @@ public class AddToCartUI {
     public void cartListStage(ScrollPane root, Optional<Customer> customer, Label runningTotalLabel) throws FileNotFoundException {
 
 
-        Button button = placeOrderButton(customer, runningTotalLabel);
+        Button button = placeOrderButton(customer);
 
         VBox totalBox = new VBox(30, runningTotalLabel, button);
         totalBox.setTranslateX(-10);
@@ -384,7 +390,7 @@ public class AddToCartUI {
             updatedScrollPane.setFitToWidth(true);
             currentCartScrollPane = updatedScrollPane;
 
-            Button button = placeOrderButton(customer, runningTotalLabel);
+            Button button = placeOrderButton(customer);
 
             VBox totalBox = new VBox(30, runningTotalLabel, button);
             totalBox.setTranslateX(-10);
@@ -406,18 +412,20 @@ public class AddToCartUI {
         alert.showAndWait();
     }
 
-    public Button placeOrderButton(Optional<Customer> customer, Label runningTotalLabel) throws FileNotFoundException {
+    public Button placeOrderButton(Optional<Customer> customer) throws FileNotFoundException {
 
         Customer freshCustomer = customerService.findCustomerById(customer.get().getId()).orElse(null);
         Button button = new Button("Place Order");
+        button.setOnAction(event -> {
+            
+        });
+        // In placeOrderButton
+        assert  freshCustomer != null;
+        button.disableProperty().bind(Bindings.createBooleanBinding(() ->
+                        totalPrice.get() == 0.0 || freshCustomer.getSales().isEmpty(),
+                 totalPrice
+        ));
 
-        assert freshCustomer != null;
-        if (freshCustomer.getSales().isEmpty()) {
-            button.setDisable(true);
-        }
-        else {
-            button.setDisable(false);
-        }
         button.setFont(Font.font("Arial", FontWeight.BOLD, 18));
         button.setTranslateX(10);
         button.setPrefWidth(380);
