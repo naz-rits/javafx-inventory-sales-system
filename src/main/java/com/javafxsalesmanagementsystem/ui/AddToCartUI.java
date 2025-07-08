@@ -11,6 +11,8 @@ import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
@@ -49,6 +51,7 @@ public class AddToCartUI {
     private Stage currentCartStage;
     private ScrollPane currentCartScrollPane;
     DoubleProperty totalPrice = new SimpleDoubleProperty(0.0);
+    private final ObservableList<SaleItem> selectedItems = FXCollections.observableArrayList();
 
 
     public AddToCartUI(SaleService saleService, SaleItemService saleItemService, CustomerService customerService) {
@@ -280,9 +283,11 @@ public class AddToCartUI {
                         checkBox.setOnAction(event -> {
                             if (checkBox.isSelected()) {
                                 this.totalPrice.set(this.totalPrice.get() + totalAmount);
+                                selectedItems.add(saleItem);
                             }
                             else {
                                 this.totalPrice.set(this.totalPrice.get() - totalAmount);
+                                selectedItems.remove(saleItem);
                             }
                             runningTotalLabel.setText("₱" + String.format("%.2f", this.totalPrice.get()));
                             System.out.println("Running Total: ₱" + String.format("%.2f", this.totalPrice.get()));
@@ -417,9 +422,13 @@ public class AddToCartUI {
         Customer freshCustomer = customerService.findCustomerById(customer.get().getId()).orElse(null);
         Button button = new Button("Place Order");
         button.setOnAction(event -> {
-            
+            try {
+                showOrderSummaryStage(selectedItems, customer);
+            } catch (FileNotFoundException f) {
+                throw new RuntimeException(f);
+            }
         });
-        // In placeOrderButton
+
         assert  freshCustomer != null;
         button.disableProperty().bind(Bindings.createBooleanBinding(() ->
                         totalPrice.get() == 0.0 || freshCustomer.getSales().isEmpty(),
@@ -441,4 +450,47 @@ public class AddToCartUI {
 
         return button;
     }
+
+    private void showOrderSummaryStage(ObservableList<SaleItem> selectedItems, Optional<Customer> customer) throws FileNotFoundException {
+        VBox root = new VBox(10);
+        root.setPadding(new Insets(20));
+        root.setAlignment(Pos.CENTER_LEFT);
+
+        for (SaleItem item : selectedItems) {
+            Product product = item.getProduct();
+            Text itemText = new Text(product.getProductName() + " x" + item.getQuantity() +
+                    " = ₱" + String.format("%.2f", item.getPrice() * item.getQuantity()));
+            itemText.setFont(Font.font("Arial", 16));
+            root.getChildren().add(itemText);
+        }
+
+        Text total = new Text("Total: ₱" + String.format("%.2f", totalPrice.get()));
+        total.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+        total.setFill(Color.DARKGREEN);
+
+        Button confirmButton = new Button("Confirm Order");
+        confirmButton.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+        confirmButton.setOnAction(e -> {
+            // maybe mark as "paid" or finalize transaction logic
+            for (SaleItem sale: selectedItems) {
+                saleItemService.removeSaleItem(sale);
+            }
+            try {
+                refreshCart(customer);
+            } catch (FileNotFoundException ex) {
+                throw new RuntimeException(ex);
+            }
+            showAlert("Order placed successfully!");
+            ((Stage) confirmButton.getScene().getWindow()).close();
+        });
+
+        root.getChildren().addAll(new Separator(), total, confirmButton);
+
+        Stage summaryStage = new Stage();
+        summaryStage.setScene(new Scene(root, 350, 400));
+        summaryStage.setTitle("Order Summary");
+        summaryStage.initModality(Modality.APPLICATION_MODAL);
+        summaryStage.show();
+    }
+
 }
