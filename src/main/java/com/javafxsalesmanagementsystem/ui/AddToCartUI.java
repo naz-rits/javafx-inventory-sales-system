@@ -7,7 +7,6 @@ import com.javafxsalesmanagementsystem.entity.SaleItem;
 import com.javafxsalesmanagementsystem.service.CustomerService;
 import com.javafxsalesmanagementsystem.service.SaleItemService;
 import com.javafxsalesmanagementsystem.service.SaleService;
-import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
@@ -38,8 +37,6 @@ import java.io.FileNotFoundException;
 import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicReference;
 
 @Service
 public class AddToCartUI {
@@ -128,7 +125,7 @@ public class AddToCartUI {
                 "-fx-text-fill: white;" +
                 "-fx-border-width: 50;" +
                 "-fx-border-radius: 50;"
-                );
+        );
         button.setFont(Font.font("Arial", FontWeight.BOLD, 18));
         button.setTranslateY(5);
         button.setCursor(Cursor.HAND);
@@ -209,16 +206,16 @@ public class AddToCartUI {
 
         // VBox container for info
         VBox infoBox = new VBox(10, nameLabel, price, descriptionText, quantityText,
-                                       quantity, total, button);
+                quantity, total, button);
         infoBox.setTranslateY(75);
         infoBox.setPadding(new Insets(30));
         infoBox.setAlignment(Pos.BASELINE_CENTER);
         infoBox.setPrefWidth(200);
         infoBox.setStyle("""
-        -fx-background-color: rgba(255,255,255,0.9);
-        -fx-background-radius: 20;
-        -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0.5, 0, 4);
-    """);
+                    -fx-background-color: rgba(255,255,255,0.9);
+                    -fx-background-radius: 20;
+                    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0.5, 0, 4);
+                """);
 
         VBox roots = new VBox(root, infoBox);
         roots.setStyle("-fx-background-image: url('" + backgroundImage + "');"
@@ -254,7 +251,7 @@ public class AddToCartUI {
                         checkBox.setScaleY(2);
                         checkBox.setTranslateY(12);
                         checkBox.setCursor(Cursor.HAND);
-                        
+
                         Product product = saleItem.getProduct();
                         ImageView imageView = new ImageView(new Image(new FileInputStream(product.getImageUrl())));
                         imageView.setFitHeight(40);
@@ -284,8 +281,7 @@ public class AddToCartUI {
                             if (checkBox.isSelected()) {
                                 this.totalPrice.set(this.totalPrice.get() + totalAmount);
                                 selectedItems.add(saleItem);
-                            }
-                            else {
+                            } else {
                                 this.totalPrice.set(this.totalPrice.get() - totalAmount);
                                 selectedItems.remove(saleItem);
                             }
@@ -304,7 +300,7 @@ public class AddToCartUI {
                         Button removeFromCartButton = new Button("", imageView2);
 
                         removeFromCartButton.setStyle("-fx-background-color: red;" +
-                                                      "-fx-text-fill: white;");
+                                "-fx-text-fill: white;");
                         removeFromCartButton.setCursor(Cursor.HAND);
                         removeFromCartButton.setPrefWidth(150);
                         removeFromCartButton.setTranslateX(110);
@@ -312,6 +308,7 @@ public class AddToCartUI {
                             if (checkBox.isSelected()) {
                                 this.totalPrice.set(this.totalPrice.get() + totalAmount);
                                 runningTotalLabel.setText("₱" + String.format("%.2f", this.totalPrice.get()));
+                                selectedItems.remove(saleItem);
                             }
                             saleService.removeSales(sale);
                             saleItemService.removeSaleItem(saleItem);
@@ -332,7 +329,7 @@ public class AddToCartUI {
                             } catch (FileNotFoundException e) {
                                 throw new RuntimeException(e);
                             }
-                            
+
                         });
                         root.getChildren().addAll(new Separator(), hBox, removeFromCartButton, new Separator());
                     }
@@ -429,10 +426,10 @@ public class AddToCartUI {
             }
         });
 
-        assert  freshCustomer != null;
+        assert freshCustomer != null;
         button.disableProperty().bind(Bindings.createBooleanBinding(() ->
                         totalPrice.get() == 0.0 || freshCustomer.getSales().isEmpty(),
-                 totalPrice
+                totalPrice
         ));
 
         button.setFont(Font.font("Arial", FontWeight.BOLD, 18));
@@ -472,9 +469,11 @@ public class AddToCartUI {
         confirmButton.setFont(Font.font("Arial", FontWeight.BOLD, 16));
         confirmButton.setOnAction(e -> {
             // maybe mark as "paid" or finalize transaction logic
-            for (SaleItem sale: selectedItems) {
+            for (SaleItem sale : selectedItems) {
                 saleItemService.removeSaleItem(sale);
             }
+            this.totalPrice.set(0.0);
+            selectedItems.clear();
             try {
                 refreshCart(customer);
             } catch (FileNotFoundException ex) {
