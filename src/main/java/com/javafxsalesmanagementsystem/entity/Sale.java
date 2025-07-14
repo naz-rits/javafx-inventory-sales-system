@@ -1,5 +1,6 @@
 package com.javafxsalesmanagementsystem.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -23,6 +24,7 @@ public class Sale {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id")
+    @JsonIgnore
     private Customer customerName;
 
     @OneToMany(fetch = FetchType.EAGER, mappedBy = "sale", orphanRemoval = true, cascade = CascadeType.ALL)

@@ -38,4 +38,8 @@ public class CustomerService {
     public Optional<Customer> findCustomerByUsername(String username) {
         return customerRepository.findByUsername(username);
     }
+
+    public void deleteCustomerById(Long id) {
+        customerRepository.deleteById(id);
+    }
 }
