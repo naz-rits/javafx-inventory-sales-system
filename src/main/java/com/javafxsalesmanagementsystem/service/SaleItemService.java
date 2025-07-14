@@ -20,6 +20,13 @@ public class SaleItemService {
         this.saleItemRepository = saleItemRepository;
     }
 
+    public SaleItem findSaleItemById(Long saleitem_id) {
+        return saleItemRepository.findById(saleitem_id).orElse(null);
+    }
+
+    public void addSales(SaleItem saleItem) {
+        saleItemRepository.save(saleItem);
+    }
 
     public boolean canDeleteProduct(Product product) {
         List<SaleItem> activeItems = saleItemRepository.findByProductAndOrderedIsFalse(product);
@@ -32,5 +39,9 @@ public class SaleItemService {
 
     public void removeSaleItem(SaleItem saleItem){
         saleItemRepository.delete(saleItem);
+    }
+
+    public void removeSaleItemById(Long saleitemId) {
+        saleItemRepository.deleteById(saleitemId);
     }
 }
