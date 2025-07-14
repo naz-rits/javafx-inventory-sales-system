@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ProductService {
@@ -18,6 +19,9 @@ public class ProductService {
         this.productRepository = productRepository;
     }
 
+    public Optional<Product> findById(Long id){
+        return productRepository.findById(id);
+    }
     public void addProduct(Product product) {
         productRepository.save(product);
     }
@@ -26,6 +30,9 @@ public class ProductService {
         productRepository.delete(product);
     }
 
+    public void removeProductById(Long product_id) {
+        productRepository.deleteById(product_id);
+    }
     public List<Product> getAllProduct() {
         Iterable<Product> iterable = productRepository.findAll();
         List<Product> list = new ArrayList<>();
