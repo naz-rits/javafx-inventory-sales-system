@@ -24,4 +24,11 @@ public class SaleService {
         saleRepository.delete(sale);
     }
 
+    public Sale findSaleById (Long sale_id){
+        return saleRepository.findById(sale_id).orElse(null);
+    }
+
+    public void removeSalesById(Long id) {
+        saleRepository.deleteById(id);
+    }
 }
