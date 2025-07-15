@@ -16,11 +16,9 @@ public class CustomerService {
     public CustomerRepository customerRepository;
 
     @Autowired
-    public CustomerService(CustomerRepository customerRepository, SaleRepository saleRepository) {
+    public CustomerService(CustomerRepository customerRepository) {
         this.customerRepository = customerRepository;
     }
-
-
 
     public void addCustomer(Customer customer) {
         customerRepository.save(customer);
@@ -29,7 +27,6 @@ public class CustomerService {
     public Optional<Customer> findCustomerByUsernameAndPassword(String username, String password) {
         return customerRepository.findByUsernameAndPassword(username, password);
     }
-
 
     public Optional<Customer> findCustomerById(Long id) {
         return customerRepository.findById(id);
@@ -42,4 +39,5 @@ public class CustomerService {
     public void deleteCustomerById(Long id) {
         customerRepository.deleteById(id);
     }
+
 }
